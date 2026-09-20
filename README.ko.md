@@ -12,9 +12,28 @@
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
 
+<p align="center"><img src="assets/hero.svg" alt="" width="820"></p>
+
 ---
 
-바이브 코딩을 위한 작업대 — **게이트 · 관행 · 킷**을 한 저장소에.
+## 명령 하나 넣으면 앱이 나온다
+
+```
+/midnight-vibe:new next-firebase ~/Dev/my-app
+```
+
+그 폴더엔 이미 Firebase 가 환경변수로 배선돼 있고(App Check·Admin SDK 포함), 다크모드까지 되는
+디자인 토큰이 깔려 있고, TestFlight·스토어 문구·스크린샷 fastlane 레인이 들어 있다.
+그다음 거기서 세션을 열고 만들 걸 말하면 된다.
+
+- **이걸 알 필요가 없다.** 부를 스킬도, 외울 슬래시 명령도, 잘 써야 할 프롬프트도 없다.
+  그냥 말하면 게이트가 순서를 잡는다.
+- **디자인이 나중 일이 아니다.** 웹 킷이 토큰 세트를 들고 온다 — 흰 배경·검정 ink·1px 라인·
+  파스텔 악센트 한둘. 관행이 모든 화면을 거기 붙들어 둔다. 다크모드는 같은 토큰을 뒤집은 것이라
+  컴포넌트가 따로 분기하지 않는다.
+- **출시까지 들어 있다.** "빌드는 된다" 다음 — TestFlight, 스토어 문구, 그리고 **살아 있는 걸
+  지우지 않는** 스크린샷 레인.
+
 게이트는 도구 호출을 실제로 거부하는 훅이다. 일하는 모습은 이렇다.
 
 ```console

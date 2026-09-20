@@ -12,9 +12,28 @@
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
 
+<p align="center"><img src="assets/hero.svg" alt="" width="820"></p>
+
 ---
 
-A workbench for vibe coding — **gates, conventions and kits** in one repo.
+## One command in, an app out
+
+```
+/midnight-vibe:new next-firebase ~/Dev/my-app
+```
+
+That folder already has Firebase wired through env vars, App Check and the Admin SDK, design tokens
+with dark mode, and fastlane lanes for TestFlight, store text and screenshots. Then you open a session
+there and say what you're building.
+
+- **You don't need to know any of this.** No skills to invoke, no slash commands to memorize, no
+  prompt to get right. Say the thing; the gates put the steps in order.
+- **Design isn't an afterthought.** The web kit ships the token set — white, black ink, 1px lines,
+  one or two pastel accents — and the convention that keeps every screen on it. Dark mode is the same
+  tokens inverted, so components never branch for it.
+- **Shipping is included.** The part after "it builds" — TestFlight, store metadata, and screenshot
+  lanes that don't wipe what's already live — is in the box.
+
 Gates are hooks that actually deny the tool call. Here is one, doing its job:
 
 ```console

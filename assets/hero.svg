@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" role="img" aria-label="midnight-vibe — coding at 2am">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1026"/><stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="380" fill="url(#sky)"/>
+
+  <g fill="#ffffff">
+    <circle cx="120" cy="70" r="1.6" opacity=".8"/><circle cx="210" cy="132" r="1.1" opacity=".5"/>
+    <circle cx="318" cy="56" r="1.4" opacity=".7"/><circle cx="905" cy="84" r="1.5" opacity=".75"/>
+    <circle cx="1010" cy="150" r="1.1" opacity=".45"/><circle cx="1108" cy="62" r="1.7" opacity=".85"/>
+    <circle cx="700" cy="44" r="1.2" opacity=".5"/><circle cx="520" cy="96" r="1.1" opacity=".4"/>
+  </g>
+  <circle cx="1045" cy="92" r="34" fill="#f5f3ff" opacity=".92"/>
+  <circle cx="1032" cy="84" r="34" fill="#0b1026" opacity=".96"/>
+
+  <ellipse cx="600" cy="300" rx="300" ry="120" fill="url(#glow)"/>
+
+  <!-- desk -->
+  <rect x="250" y="286" width="700" height="10" rx="5" fill="#2e2a5e"/>
+  <rect x="300" y="296" width="14" height="52" rx="4" fill="#25215033"/>
+  <rect x="886" y="296" width="14" height="52" rx="4" fill="#25215033"/>
+
+  <!-- laptop -->
+  <g transform="translate(486,166)">
+    <rect x="0" y="0" width="228" height="140" rx="10" fill="#141134" stroke="#4c3f9e" stroke-width="2"/>
+    <rect x="12" y="12" width="204" height="116" rx="6" fill="url(#screen)" opacity=".9"/>
+    <g fill="#0b1026" opacity=".55">
+      <rect x="26" y="30" width="86" height="7" rx="3.5"/>
+      <rect x="26" y="48" width="140" height="7" rx="3.5"/>
+      <rect x="26" y="66" width="62" height="7" rx="3.5"/>
+      <rect x="26" y="84" width="116" height="7" rx="3.5"/>
+    </g>
+    <rect x="-24" y="140" width="276" height="12" rx="6" fill="#1d1a44" stroke="#4c3f9e" stroke-width="2"/>
+  </g>
+
+  <!-- mug, steam -->
+  <g transform="translate(788,246)">
+    <rect x="0" y="6" width="42" height="34" rx="6" fill="#f5f3ff"/>
+    <path d="M42 14h10a9 9 0 0 1 0 18H42z" fill="none" stroke="#f5f3ff" stroke-width="5"/>
+    <g stroke="#c4b5fd" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7">
+      <path d="M12 0c6-8-6-12 0-20"/><path d="M28 0c6-8-6-12 0-20"/>
+    </g>
+  </g>
+
+  <!-- cat -->
+  <g transform="translate(360,238)" fill="#f5f3ff">
+    <ellipse cx="34" cy="34" rx="36" ry="24"/>
+    <circle cx="14" cy="18" r="17"/>
+    <path d="M2 6l2-13 11 7zM26 6l-2-13-11 7z"/>
+    <path d="M66 36c14 2 16-14 4-16" fill="none" stroke="#f5f3ff" stroke-width="6" stroke-linecap="round"/>
+    <g fill="#1e1b4b"><circle cx="8" cy="18" r="2.4"/><circle cx="21" cy="18" r="2.4"/></g>
+  </g>
+
+  <text x="600" y="358" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
+        font-size="17" fill="#a78bfa" letter-spacing="3">midnight-vibe</text>
+</svg>
