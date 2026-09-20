@@ -204,6 +204,17 @@ The lifecycle test measures one thing: **the turn comes back to you exactly twic
 Not done yet: **one live session** with the plugin actually installed. The tests above invoke the hooks
 directly, so the path where Claude Code registers and calls them is verified by `/midnight-vibe:doctor`.
 
+## Updating
+
+```bash
+claude plugin marketplace add hyperitycorp-jkh/midnight-vibe   # once
+claude plugin install midnight-vibe@midnight-vibe
+```
+
+**Hooks registered when a session started do not swap on reinstall.** A new version installs fine and
+`claude plugin list` shows it, but the running session keeps calling the old hook scripts until you
+start a fresh session. If you just updated and the behaviour looks unchanged, that's why.
+
 ## Turning it off
 
 ```bash

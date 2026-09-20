@@ -197,6 +197,17 @@ python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done �
 아직 안 한 것: 플러그인을 실제로 물린 **라이브 세션 한 바퀴**. 위 검증은 훅을 직접 호출해 잰 것이라,
 Claude Code 가 훅을 등록하고 부르는 경로 자체는 `/midnight-vibe:doctor` 로 확인해야 한다.
 
+## 업데이트
+
+```bash
+claude plugin marketplace add hyperitycorp-jkh/midnight-vibe   # 한 번만
+claude plugin install midnight-vibe@midnight-vibe
+```
+
+**세션이 시작될 때 등록된 훅은 재설치로 바뀌지 않는다.** 새 버전이 깔리고 `claude plugin list` 에도
+그렇게 보이지만, 돌고 있는 세션은 새 세션을 열기 전까지 옛 훅 스크립트를 계속 부른다.
+방금 업데이트했는데 동작이 그대로라면 이유는 그것이다.
+
 ## 끄기
 
 ```bash
