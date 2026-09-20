@@ -1,0 +1,13 @@
+{
+  "name": "midnight-vibe",
+  "owner": {
+    "name": "Jeon Kwangha"
+  },
+  "plugins": [
+    {
+      "name": "midnight-vibe",
+      "source": "./",
+      "description": "A Claude Code harness that cannot start without an interview and cannot finish without evidence, plus Flutter and Next.js kits"
+    }
+  ]
+}
