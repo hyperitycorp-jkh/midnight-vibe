@@ -1,0 +1,210 @@
+# midnight-vibe
+
+A workbench for vibe coding — **gates, conventions, and kits** in one repo.
+
+It cannot start without interviewing you, and it cannot finish without evidence.
+In between, it doesn't ask. It just goes.
+
+> 한국어: [README.ko.md](README.ko.md)
+
+```mermaid
+stateDiagram-v2
+    [*] --> interview: "an edit above the auto-pass size is blocked"
+    interview --> prd: "writes a PRD, shows it to you"
+    prd --> planned: "you replied + ## Open questions is empty"
+    planned --> running: "advisor: APPROVED plan#hash"
+    running --> review: "## Tasks all done"
+    review --> done: "advisor: REVIEWED ok tree#hash"
+    running --> planned: "wrong premise → fix plan, re-approve"
+    done --> [*]: "memory budget met · prd.md deleted"
+```
+
+There are exactly **two** places where the turn comes back to you: when the PRD is shown,
+and the final report. In between, `AskUserQuestion` is denied and `Stop` is blocked,
+so a user turn never happens.
+
+## Why this exists
+
+The same four things happen every time you hand work to an agent.
+
+1. **It starts with too little context.** It writes code instead of asking what it should have asked.
+2. **Then it interrupts you mid-flight** with problems it should have solved itself.
+3. **Files multiply.** PRD, TASKS, MEMORY, ARCHITECTURE… more things to maintain, all going stale.
+4. **Memory only grows.** On the machine this was built for, one project's memory held **144 files**,
+   and another had 8 `prd_*` and 7 `todo_*` files untouched for half a year. Stale memory is worse
+   than none — the agent reads it and is confidently wrong.
+
+(1) and (2) look contradictory. They aren't — **the order is just inverted.**
+Ask everything before starting; once it's agreed, never ask again.
+That boundary is a single PRD, and this repo enforces it with hooks.
+
+The popular answer to (3) — a `docs/` folder holding PRD, ARCHITECTURE, RULES, DESIGN, TASKS and MEMORY —
+is not used here. It has no official basis (it's a repackaging of Cline's 2025 "Memory Bank"),
+it occupies context permanently, and nobody owns keeping it true.
+Here there is **one `.claude/prd.md` while work is in flight**, and it deletes itself when done.
+
+## What's different
+
+| | Common approach | midnight-vibe |
+|---|---|---|
+| Rules | Written in a doc, model expected to follow | Hooks actually deny the tool call |
+| State | Held in conversation — gone after compaction | Written to file frontmatter — survives it |
+| Approval | Model says "approved" and that's that | Only a token inside a subagent `tool_result` counts (a model can't forge one) |
+| Done | Model says "it's done" and that's that | Review evidence must match the working-tree hash |
+| Files | A `docs/` set that lives forever | One file in flight, deleted at the end |
+| Loop | Turned on with a slash command | Driven by the `state` value — nothing to turn on |
+| Limits | Usually unstated | [Written down](#gates-and-their-limits), including what hooks cannot stop |
+
+## Install
+
+```bash
+/plugin marketplace add hyperitycorp-jkh/midnight-vibe
+/plugin install midnight-vibe
+```
+
+Needs `jq` and `git`. Without them the gates refuse rather than pass silently.
+Run `/midnight-vibe:doctor` to confirm it's actually wired in.
+
+## How to use it
+
+### 1. Start a new app
+
+```
+/midnight-vibe:new flutter-cubit-firebase ~/Dev/my-app
+```
+
+The kit is copied to that path. **You don't build apps inside this repo** — the repo is installed
+as a plugin, and each app lives in its own folder outside it. Then open a session there and just say it:
+"let's build a marketplace app."
+
+Don't re-decide the structure. The kit's `CODE_RULES.md` and `conventions/` already hold the answers,
+and **what's written there is never asked again.**
+
+### 2. Build one feature
+
+Say what you want in one line. Here's what happens next:
+
+| What you see | What you do |
+|---|---|
+| `.claude/prd.md` opens with ≤5 questions under `## Open questions`, each with a default | Answer. Or just say "use the defaults" |
+| A plan is written and `advisor` approves it | **Nothing.** If rejected, it fixes and resubmits on its own |
+| It runs to the end — it won't ask, even when stuck | Wait. Interrupt any time by just talking |
+| `advisor` reviews → final report | Read it. `.claude/prd.md` deletes itself |
+
+If you get more than 5 questions, or questions without defaults, that's a bug. Please open an issue.
+
+### 3. Small edits stay small
+
+Making someone write a PRD to fix a typo turns the harness into an obstacle.
+**Two files and 40 lines or fewer and the gates are invisible** — it just gets fixed and it just ends.
+The thresholds are `MAX_FILES` and `MAX_LINES` in `hooks/gate-edit.sh`.
+
+### 4. When it blocks you
+
+The block message says **what evidence is missing** — "seen doesn't match" means show the revised PRD
+again; "no APPROVED" means `advisor` was never called. Read that one line instead of working around it.
+
+If it's genuinely in your way, turn it off (below).
+
+## Repository layout
+
+```
+midnight-vibe/
+├─ hooks/              the gates — the only things that actually enforce
+│  ├─ gate-edit.sh       PreToolUse: big edits before a PRD, unapproved execution, questions mid-run, memory bloat
+│  ├─ gate-stop.sh       Stop: can't finish with tasks left or no review evidence (this IS the loop)
+│  ├─ stamp-prompt.sh    UserPromptSubmit: stamps the hash of the PRD you actually saw
+│  ├─ session-brief.sh   SessionStart: restores the phase after compaction or resume
+│  └─ tests/             26 gate cases + 13 full-lifecycle cases
+├─ bin/                prd-hash · tree-hash · body-hash — what approval and review are bound to
+├─ agents/advisor.md   the senior reviewer holding both gates (approve · review)
+├─ skills/work/        the interview procedure and how to write the PRD
+├─ output-styles/      ask while the phase allows it, never after
+├─ commands/           /midnight-vibe:new · :doctor · :off
+├─ conventions/        what must never be asked again — where the harness grows
+├─ kits/               starting points for new apps, plus copy-paste recipes
+└─ templates/prd.md    the only file that exists while work is in flight
+```
+
+## Why it can't be forged
+
+Anyone can write `state: running`. So the state isn't trusted — **the evidence for that state**
+is re-checked on every action.
+
+- Approval and review only count when the token appears **inside an `advisor` subagent's `tool_result`**.
+  A model can write `APPROVED` in its own reply; it cannot fabricate a `tool_result`.
+- Approval is bound to the hash of the `## Plan` section. Edit the plan after approval and it's void.
+- Review is bound to the working-tree hash. Touch the code after passing and it's void.
+- `seen:` (the hash of the PRD you saw) is stamped only by the `UserPromptSubmit` hook —
+  a user message is the one event a model cannot manufacture.
+
+## Gates and their limits
+
+| Gate | What the hook stops | What it **can't** |
+|---|---|---|
+| PRD agreed | Big edits before a PRD (default: >2 files / >40 lines) | Question quality; Bash heredoc workarounds (pattern heuristics) |
+| Plan approved | Editing in the run phase without approval evidence | The advisor's judgment; a thin plan written to be easy to approve |
+| Review passed | Finishing with tasks left, or with no evidence | Summarizing the review honestly |
+| No questions leak | `AskUserQuestion` during the run phase | Question marks in prose — harmless, since the turn can't end |
+| Memory | Creating `prd_`/`todo_`-style files, new files over budget | What's already piled up — it only forces cleanup at `done` |
+
+**A Stop hook cannot undo or edit a reply that has already been produced.** All it can do is refuse to
+let the turn end, and even that has a ceiling. midnight-vibe releases its own gate at the ceiling
+(default 25) and says so — it will not silently burn tokens forever.
+Not hiding this limit is the posture of this repo.
+
+## Kits
+
+Copy one, start, refine while you use it, and let the refinements come back to the kit.
+
+| Kit | What |
+|---|---|
+| `kits/flutter-cubit-firebase` | Flutter + cubit + Firebase. One repository per collection, CRUD only; all logic in cubits |
+| `kits/next-firebase` | Next.js (App Router) + Firebase. Config entirely from env; App Check and Admin SDK included |
+| `kits/recipes/` | Integrations that are a pain to wire (Kakao login, …) as **one copy-paste file** |
+
+Kits carry **no real Firebase config**. Flutter ships only `firebase_options.dart.template` with the
+real file gitignored — a new app runs `flutterfire configure` for its own. The web kit is all env vars.
+
+Recipes have one rule: **nothing ever imports them.** They're a file you copy when you need it,
+so when Kakao changes its API and the recipe goes stale, **no app breaks and there's no version to chase.**
+Each one carries a date and a link to the official docs at the top — the date is the warning.
+Stale recipes are not deleted.
+
+## What grows
+
+`conventions/` holds long-standing practices, one file each. The interview reads these first,
+and **what's written there is never asked again.** When a new practice hardens, add a line.
+That's where the harness grows.
+
+## What this deliberately isn't
+
+No `docs/` six-file set (PRD/ARCHITECTURE/RULES/DESIGN/TASKS/MEMORY), no `plans/` directory,
+no global rules file, no ralph-loop dependency. One file while running, deleted at the end.
+The autonomous loop is the Stop hook itself, so there's nothing to switch on —
+it's triggered by a `state` value, not a slash command.
+
+## Verify
+
+```bash
+python3 hooks/tests/gates.test.py      # 26 gate cases — both violations and false blocks
+python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
+```
+
+The lifecycle test measures one thing: **the turn comes back to you exactly twice.**
+
+Not done yet: **one live session** with the plugin actually installed. The tests above invoke the hooks
+directly, so the path where Claude Code registers and calls them is verified by `/midnight-vibe:doctor`.
+
+## Turning it off
+
+```bash
+export CLAUDE_HARNESS_OFF=1   # this once
+touch .claude/harness.off     # for this project
+```
+
+A switch that sits in front of the hooks. If the harness is in your way, turning it off is the right call.
+
+## License
+
+MIT.

@@ -1,0 +1,9 @@
+#!/bin/bash
+# `## 계획` 섹션(다음 ## 전까지)의 sha256 앞 8자. 승인은 이 값에 걸린다.
+# 섹션이 없으면 빈 문자열 — 없는 계획은 승인될 수 없다.
+set -u
+file="${1:-.claude/prd.md}"
+[ -f "$file" ] || exit 0
+body=$(awk '/^## 계획[[:space:]]*$/{f=1;next} /^## /{f=0} f' "$file" | sed 's/[[:space:]]*$//')
+[ -z "$(printf '%s' "$body" | tr -d '[:space:]')" ] && exit 0
+printf '%s' "$body" | shasum -a 256 2>/dev/null | cut -c1-8

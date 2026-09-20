@@ -1,0 +1,9 @@
+# 실제 Firebase 설정은 저장소에 올리지 않는다. .template 를 복사해 쓰거나
+# `flutterfire configure` 로 다시 만든다.
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+android/key.properties
+*.jks
+*.keystore
+.env

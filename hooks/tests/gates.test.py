@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""게이트를 위반·오차단 양방향으로 잰다.  python3 hooks/tests/gates.test.py
+
+차단 신호가 두 가지라 둘 다 본다: PreToolUse 는 stdout JSON 의 permissionDecision:deny,
+Stop 은 stdout JSON 의 decision:block. exit code 로 재면 전부 통과로 읽힌다."""
+import json, subprocess, os, sys, tempfile, hashlib, shutil
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+EDIT, STOP, STAMP = (os.path.join(ROOT, "hooks", n) for n in ("gate-edit.sh", "gate-stop.sh", "stamp-prompt.sh"))
+FAIL = []
+
+PRD = """---
+schema: 1
+state: {state}
+seen: {seen}
+approved: {approved}
+loop: {loop}
+---
+# 목표
+
+## 미정
+{undecided}
+
+## 결정
+- 정해짐
+
+## 계획
+{plan}
+
+## 할 일
+{todo}
+"""
+
+def h8(s):
+    return hashlib.sha256(s.encode()).hexdigest()[:8]
+
+def make_project(tmp, state="interview", plan="1. 하나", approved="", undecided="", todo="- [ ] 남음", seen=None, loop=0):
+    os.makedirs(os.path.join(tmp, ".claude"), exist_ok=True)
+    body = PRD.format(state=state, seen="", approved=approved, loop=loop, undecided=undecided, plan=plan, todo=todo)
+    path = os.path.join(tmp, ".claude", "prd.md")
+    open(path, "w").write(body)
+    if seen == "auto":  # 본문 해시는 훅과 같은 코드로 계산한다 — 파이썬으로 다시 구현하면 둘이 갈린다
+        seen = subprocess.run([os.path.join(ROOT, "bin", "body-hash"), path], capture_output=True, text=True).stdout.strip()
+    body = PRD.format(state=state, seen=seen or "", approved=approved, loop=loop, undecided=undecided, plan=plan, todo=todo)
+    open(path, "w").write(body)
+    return path
+
+def transcript(tmp, advisor_result=None, assistant_text=None, user_msgs=0, name="t.jsonl"):
+    p = os.path.join(tmp, name)  # 이름을 안 나누면 두 트랜스크립트가 같은 파일을 덮어써 테스트가 거짓 실패한다
+    lines = []
+    for _ in range(user_msgs):
+        lines.append({"type": "user", "message": {"content": "해줘"}})
+    if assistant_text:
+        lines.append({"type": "assistant", "message": {"content": [{"type": "text", "text": assistant_text}]}})
+    if advisor_result is not None:
+        lines.append({"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "id": "t1", "name": "Agent", "input": {"subagent_type": "advisor"}}]}})
+        lines.append({"type": "user", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "t1", "content": advisor_result}]}})
+    open(p, "w").write("\n".join(json.dumps(l) for l in lines) + "\n")
+    return p
+
+def run(hook, payload, env=None):
+    e = dict(os.environ); e.setdefault("HOME", payload.get("_home", os.environ["HOME"]))
+    if env: e.update(env)
+    payload.pop("_home", None)
+    return subprocess.run([hook], input=json.dumps(payload), capture_output=True, text=True, errors="replace", env=e)
+
+def denied(p): return '"permissionDecision":"deny"' in p.stdout.replace(" ", "")
+def blocked(p): return '"decision":"block"' in p.stdout.replace(" ", "")
+
+def check(label, got, want):
+    ok = got == want
+    if not ok: FAIL.append(label)
+    print(f"{'통과' if ok else '**실패**':8} {'막음' if got else '통과':4}  {label}")
+
+def edit_payload(tmp, path=None, content="x\n", tool="Write", tr=None):
+    return {"tool_name": tool, "cwd": tmp, "transcript_path": tr or "",
+            "tool_input": {"file_path": path or os.path.join(tmp, "a.ts"), "content": content}}
+
+# ── PRD 전 ────────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); make_project(tmp)
+check("PRD 없음 + 작은 편집(1파일 3줄) → 통과", denied(run(EDIT, edit_payload(tmp, content="a\nb\nc"))), False)
+check("PRD 없음 + 큰 편집(60줄) → 차단", denied(run(EDIT, edit_payload(tmp, content="x\n" * 60))), True)
+check("PRD 파일 자체 쓰기는 언제나 통과", denied(run(EDIT, edit_payload(tmp, path=os.path.join(tmp, ".claude/prd.md"), content="x\n" * 60))), False)
+
+# ── 승인 증거 ─────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
+plan_hash = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), prd], capture_output=True, text=True).stdout.strip()
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto")
+tr_ok = transcript(tmp, advisor_result=f"APPROVED plan#{plan_hash}")
+tr_text = transcript(tmp, assistant_text=f"APPROVED plan#{plan_hash}", name="t2.jsonl")
+check("running + approved 일치 + advisor tool_result → 통과",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), False)
+check("running + assistant 텍스트에만 APPROVED → 차단(위조 불가)",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_text))), True)
+make_project(tmp, state="running", plan="1. 하나", approved="deadbeef", seen="auto")
+check("running + approved 가 지금 계획과 다름 → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="ffffffff")
+check("running + seen 불일치(사용자가 본 PRD 아님) → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto", undecided="- 못 정한 것")
+check("running + ## 미정 남음 → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
+
+# ── 질문 누출 ─────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); make_project(tmp, state="running", approved="x", seen="auto")
+check("running 에서 AskUserQuestion → 차단",
+      denied(run(EDIT, {"tool_name": "AskUserQuestion", "cwd": tmp, "tool_input": {}})), True)
+make_project(tmp, state="interview")
+check("interview 에서 AskUserQuestion → 통과",
+      denied(run(EDIT, {"tool_name": "AskUserQuestion", "cwd": tmp, "tool_input": {}})), False)
+
+# ── 메모리 ────────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); make_project(tmp)
+mem = os.path.join(tmp, "home", ".claude", "projects", "-p", "memory"); os.makedirs(mem)
+check("메모리에 todo_ 파일 생성 → 차단",
+      denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "todo_x.md")))), True)
+check("메모리에 사실 파일 생성 → 통과",
+      denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "deploy-key.md")))), False)
+for i in range(12): open(os.path.join(mem, f"f{i}.md"), "w").write("x")
+check("메모리 예산 초과 + 새 파일 → 차단",
+      denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "new.md")))), True)
+check("메모리 예산 초과 + 기존 파일 수정 → 통과",
+      denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "f1.md")))), False)
+
+# ── Stop ──────────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
+check("running + 남은 할 일 → 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)
+loop_now = [l for l in open(os.path.join(tmp, ".claude/prd.md")) if l.startswith("loop:")][0]
+check("차단할 때 loop 카운터 증가", loop_now.strip() == "loop: 1", True)
+make_project(tmp, state="running", todo="- [x] 끝")
+check("running + 할 일 전부 완료 → 검수로 가라(역시 끝내지 못함)", blocked(run(STOP, {"cwd": tmp})), True)
+make_project(tmp, state="running", todo="- [ ] 남음", loop=25)
+check("loop 상한 도달 → 게이트 해제", blocked(run(STOP, {"cwd": tmp})), False)
+make_project(tmp, state="interview")
+check("interview 에서 멈추기 → 허용(사용자에게 올라가는 자리)", blocked(run(STOP, {"cwd": tmp})), False)
+make_project(tmp, state="prd")
+check("prd 에서 멈추기 → 허용", blocked(run(STOP, {"cwd": tmp})), False)
+make_project(tmp, state="planned")
+check("planned 에서 멈추기 → 차단(승인은 advisor 가 한다)", blocked(run(STOP, {"cwd": tmp})), True)
+
+# 검수: tree 해시가 맞아야만 통과
+tmp = tempfile.mkdtemp(); make_project(tmp, state="review")
+tree = subprocess.run([os.path.join(ROOT, "bin", "tree-hash"), tmp], capture_output=True, text=True).stdout.strip()
+check("review + 검수 증거 없음 → 차단", blocked(run(STOP, {"cwd": tmp, "transcript_path": transcript(tmp, advisor_result="아직")})), True)
+make_project(tmp, state="review")
+check("review + 다른 tree 해시의 통과 → 차단",
+      blocked(run(STOP, {"cwd": tmp, "transcript_path": transcript(tmp, advisor_result="REVIEWED ok tree#00000000")})), True)
+
+# ── 킬 스위치 ─────────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
+check("CLAUDE_HARNESS_OFF=1 → Stop 전면 통과", blocked(run(STOP, {"cwd": tmp}, env={"CLAUDE_HARNESS_OFF": "1"})), False)
+check("CLAUDE_HARNESS_OFF=1 → 편집 전면 통과",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60), env={"CLAUDE_HARNESS_OFF": "1"})), False)
+open(os.path.join(tmp, ".claude", "harness.off"), "w").write("")
+check(".claude/harness.off → 전면 통과", blocked(run(STOP, {"cwd": tmp})), False)
+
+# ── stamp-prompt ──────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="prd")
+run(STAMP, {"cwd": tmp})
+seen = [l for l in open(prd) if l.startswith("seen:")][0].split(":", 1)[1].strip()
+check("state=prd 에서 사용자 발화 → seen 이 찍힘", len(seen) == 8, True)
+prd = make_project(tmp, state="running")
+run(STAMP, {"cwd": tmp})
+seen2 = [l for l in open(prd) if l.startswith("seen:")][0].split(":", 1)[1].strip()
+check("state=running 에서는 seen 을 건드리지 않음", seen2 == "", True)
+
+print()
+if FAIL:
+    print(f"실패 {len(FAIL)}건: " + ", ".join(FAIL)); sys.exit(1)
+print("전부 통과")
