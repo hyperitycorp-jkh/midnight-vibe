@@ -10,9 +10,9 @@
 stateDiagram-v2
     [*] --> interview: "자동 통과 크기를 넘는 편집이 차단됨"
     interview --> prd: "PRD 를 쓰고 사용자에게 보인다"
-    prd --> planned: "사용자 답장 + ## 미정 이 빔"
+    prd --> planned: "사용자 답장 + ## Open questions 가 빔"
     planned --> running: "advisor: APPROVED plan#해시"
-    running --> review: "## 할 일 전부 완료"
+    running --> review: "## Tasks 전부 완료"
     review --> done: "advisor: REVIEWED ok tree#해시"
     running --> planned: "전제 오류 → 계획 고쳐 재승인"
     done --> [*]: "메모리 예산 통과 · prd.md 삭제"
@@ -90,7 +90,7 @@ stateDiagram-v2
 
 | 무엇이 보이나 | 무엇을 하면 되나 |
 |---|---|
-| `.claude/prd.md` 한 장이 열리고 `## 미정` 에 질문 5개 이하, 항목마다 기본값 | 답한다. 답하기 싫으면 "기본값대로" 한마디면 된다 |
+| `.claude/prd.md` 한 장이 열리고 `## Open questions` 에 질문 5개 이하, 항목마다 기본값 | 답한다. 답하기 싫으면 "기본값대로" 한마디면 된다 |
 | 계획이 서고 `advisor` 가 승인한다 | **아무것도 안 해도 된다.** 반려돼도 알아서 고쳐 다시 올린다 |
 | 끝까지 돈다 — 막혀도 묻지 않는다 | 기다린다. 중간에 끼어들고 싶으면 그냥 말하면 된다 |
 | `advisor` 검수 → 완료 보고 | 받는다. `.claude/prd.md` 는 스스로 지워진다 |
@@ -137,7 +137,7 @@ midnight-vibe/
 
 - 승인·검수는 **advisor 서브에이전트의 `tool_result` 안**에 있는 토큰만 인정한다.
   모델은 자기 답변에 `APPROVED` 라고 쓸 수 있어도 `tool_result` 를 만들어 낼 수는 없다.
-- 승인은 `## 계획` 섹션의 해시에 걸린다. 승인 뒤 계획을 고치면 자동으로 무효가 된다.
+- 승인은 `## Plan` 섹션의 해시에 걸린다. 승인 뒤 계획을 고치면 자동으로 무효가 된다.
 - 검수는 작업트리 해시에 걸린다. 통과 뒤 코드를 고치면 역시 무효가 된다.
 - `seen:`(사용자가 본 PRD 의 해시)은 `UserPromptSubmit` 훅만 찍는다 —
   사용자 메시지는 모델이 만들어 낼 수 없는 유일한 사건이다.

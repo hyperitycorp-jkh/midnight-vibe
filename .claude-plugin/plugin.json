@@ -1,7 +1,7 @@
 {
   "name": "midnight-vibe",
-  "version": "0.1.0",
-  "description": "인터뷰 없이 착수하지 못하고, 증거 없이 끝나지 못하는 하네스. 국면을 .claude/prd.md 한 장에 적고 훅이 그 전이를 지킨다.",
+  "version": "0.2.0",
+  "description": "A harness that cannot start without interviewing you and cannot finish without evidence. The phase lives in one .claude/prd.md and hooks guard its transitions.",
   "author": { "name": "Jeon Kwangha" },
   "keywords": ["harness", "hooks", "prd", "autonomous", "gates"]
 }

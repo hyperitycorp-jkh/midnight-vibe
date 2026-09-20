@@ -1,8 +1,8 @@
 ---
-description: 이 프로젝트에서 midnight-vibe 게이트를 끈다 (훅보다 먼저 있는 스위치)
+description: Turn midnight-vibe's gates off for this project (a switch that sits in front of the hooks)
 ---
 
-`.claude/harness.off` 파일을 만들고, 껐다는 것과 다시 켜는 법(`rm .claude/harness.off`)을 한 줄로 알려라.
-한 번만 끄고 싶으면 `CLAUDE_HARNESS_OFF=1` 환경변수를 쓰면 된다는 것도 같이 적어라.
+Create `.claude/harness.off`, then say in one line that it's off and how to turn it back on (`rm .claude/harness.off`).
+Mention that `CLAUDE_HARNESS_OFF=1` turns it off for a single run.
 
-하네스가 일을 방해하면 끄는 게 맞다. 끄는 것을 말리지 마라.
+If the harness is in someone's way, turning it off is the right call. Don't argue them out of it.

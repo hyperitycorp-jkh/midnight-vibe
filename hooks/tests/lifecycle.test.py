@@ -16,7 +16,7 @@ def write_prd(tmp, state, plan="1. a\n2. b", approved="", undecided="", todo="- 
     os.makedirs(os.path.join(tmp, ".claude"), exist_ok=True)
     open(os.path.join(tmp, ".claude", "prd.md"), "w").write(
         f"---\nschema: 1\nstate: {state}\nseen: {seen}\napproved: {approved}\nloop: 0\n---\n"
-        f"# 목표\n\n## 미정\n{undecided}\n\n## 결정\n- 정해짐\n\n## 계획\n{plan}\n\n## 할 일\n{todo}\n")
+        f"# 목표\n\n## Open questions\n{undecided}\n\n## Decisions\n- 정해짐\n\n## Plan\n{plan}\n\n## Tasks\n{todo}\n")
     return os.path.join(tmp, ".claude", "prd.md")
 
 def hash_of(script, target):

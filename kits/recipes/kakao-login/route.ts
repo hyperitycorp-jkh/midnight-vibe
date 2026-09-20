@@ -1,10 +1,10 @@
 /**
  * GET /api/auth/kakao/callback
- * Kakao OAuth callback — code → access_token → user info → Firebase Custom Token
+ * Kakao OAuth callback — code → access_token → user info → Firebase custom token
  *
- * 응답:
- * - 성공: /{locale}/auth/kakao-complete?token=...&redirect=... 로 리다이렉트
- * - 실패: /auth/login?error=kakao 로 리다이렉트
+ * Responses:
+ * - success: redirect to /{locale}/auth/kakao-complete?token=...&redirect=...
+ * - failure: redirect to /auth/login?error=kakao
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { initializeApp, getApps, cert } from 'firebase-admin/app'

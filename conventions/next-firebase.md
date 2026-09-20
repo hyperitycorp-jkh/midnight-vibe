@@ -1,31 +1,31 @@
 ---
 name: next-firebase
-applies: Next.js (App Router) 웹 (kits/next-firebase 로 시작한 것 포함)
+applies: Next.js (App Router) web (including anything started from kits/next-firebase)
 ---
 
 # Next.js — App Router · Firebase
 
-**인터뷰에서 이걸 다시 묻지 않는다.**
+**Never ask about any of this in the interview.**
 
-## 구조
+## Structure
 
 ```
 src/
-  app/         라우트만. 화면 로직을 여기 쌓지 않는다
-  modules/     기능 단위 — 그 기능의 화면·상태·호출이 한 폴더에
-  widgets/     여러 기능이 같이 쓰는 UI
-  services/    외부 세계 (firebase/*, 외부 API)
-  stores/      전역 상태 (zustand)
-  lib/         순수 유틸·검증·로깅
-  config/      상수
-  types/       공용 타입
+  app/         routes only — screen logic doesn't pile up here
+  modules/     one folder per feature: its screens, state and calls
+  widgets/     UI shared across features
+  services/    the outside world (firebase/*, external APIs)
+  stores/      global state (zustand)
+  lib/         pure utilities, validation, logging
+  config/      constants
+  types/       shared types
 ```
 
-## 지키는 것
+## Rules
 
-- **Firebase 설정은 전부 환경변수.** 코드에 키를 박지 않는다. `NEXT_PUBLIC_` 은 브라우저로
-  나가는 값에만 — Admin 자격증명에 붙이면 계정이 통째로 열린다.
-- 클라이언트 키가 공개되는 건 정상이다. 대신 **App Check·보안 규칙·API 키 제한이 실제로 걸려 있어야 한다.**
-- 커스텀 토큰 발급·관리자 작업은 **서버(route handler)에서만.**
-- 외부 리다이렉트는 화이트리스트로 검사한다.
-- 초기화는 `getApps().length ? getApp() : initializeApp(...)` — hot reload 중복 초기화를 막는다.
+- **All Firebase config comes from env vars.** Never hardcode keys. `NEXT_PUBLIC_` belongs only on values
+  meant for the browser — put it on an Admin credential and the whole account is open.
+- Client keys being public is fine. What must actually be in place is App Check, security rules and API key restrictions.
+- Custom tokens and admin work happen **server-side only** (route handlers).
+- Validate external redirects against a whitelist.
+- Initialize with `getApps().length ? getApp() : initializeApp(...)` to survive hot reload.

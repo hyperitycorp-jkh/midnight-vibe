@@ -2,6 +2,6 @@
   "name": "midnight-vibe",
   "owner": { "name": "Jeon Kwangha" },
   "plugins": [
-    { "source": "./", "description": "인터뷰 없이 착수 못 하고, 증거 없이 끝나지 못하는 Claude Code 하네스" }
+    { "source": "./", "description": "A Claude Code harness that cannot start without an interview and cannot finish without evidence" }
   ]
 }

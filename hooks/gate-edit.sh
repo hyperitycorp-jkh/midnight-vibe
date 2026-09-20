@@ -1,13 +1,13 @@
 #!/bin/bash
-# PreToolUse. 국면에 맞지 않는 행위를 막는다.
+# PreToolUse. Denies what doesn't belong in the current phase.
 #
-#  - PRD 가 서기 전의 큰 편집  → 막는다 (인터뷰를 건너뛴 착수)
-#  - 승인 증거 없는 실행       → 막는다 (계획 승인 게이트)
-#  - 실행 국면의 사용자 질문   → 막는다 (자율 주행)
-#  - 메모리 디렉토리 비대화    → 막는다
+#  - a large edit before a PRD exists  → denied (starting without the interview)
+#  - execution without approval evidence → denied (the plan gate)
+#  - a question to the user mid-run     → denied (autonomy)
+#  - memory growing without bound       → denied
 #
-# 상태를 위조해도 소용없게 만드는 것이 이 훅의 전부다: `state: running` 이라고 적는 건
-# 누구나 할 수 있으므로, running 에서 편집할 때마다 **그 상태의 증거**를 다시 검사한다.
+# Making a forged state useless is the whole job of this hook: anyone can write
+# `state: running`, so every edit in that state re-checks **the evidence for it**.
 set -u
 MAX_FILES=2
 MAX_LINES=40
@@ -24,26 +24,28 @@ tool=$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)
 prd="$(mv_prd "$cwd")"
 state=$(fm "$prd" state); [ -z "$state" ] && state="none"
 
-# ── 질문 누출 차단 ────────────────────────────────────────────────
-# PRD 가 선 뒤로 사용자에게 올라가는 질문은 없다. 남는 출구는 advisor 호출과 국면 후퇴뿐이다.
+# ── No questions leak ─────────────────────────────────────────────
+# Once the PRD stands, no question reaches the user. The only exits left are the
+# advisor and stepping the phase back.
 if [ "$tool" = "AskUserQuestion" ]; then
   case "$state" in
     planned|running|review)
       require_jq
-      deny_json "[midnight] $state 국면에서는 사용자에게 묻지 않습니다.
+      deny_json "[midnight] No questions to the user in the '$state' phase.
 
-PRD 에서 합의한 범위 안의 일이면 스스로 판단해 진행하세요. 판단이 안 서면 advisor 서브에이전트에 물으세요.
-전제 자체가 틀렸다면 .claude/prd.md 의 state 를 planned(계획 수정) 또는 prd(재합의)로 되돌리고 그 이유를 ## 결정 에 적으세요." ;;
+If it's inside what the PRD already settled, decide it yourself. If you genuinely can't, ask the
+advisor subagent. If the premise itself turned out wrong, set state in .claude/prd.md back to
+'planned' (fix the plan) or 'prd' (re-agree) and write why under ## Decisions." ;;
   esac
   exit 0
 fi
 
-# ── 편집 대상 뽑기 ────────────────────────────────────────────────
+# ── What is being written ─────────────────────────────────────────
 file_path=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
 pending=0
 if [ "$tool" = "Bash" ]; then
   cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)
-  # 쓰기처럼 보이지 않으면 빠르게 빠진다 — 매 Bash 호출마다 도는 훅이다.
+  # Bail out fast when it doesn't look like a write — this runs on every Bash call.
   case "$cmd" in
     *">"*|*"tee "*|*"sed -i"*|*"cp "*|*"mv "*|*"install "*|*"python3 -"*|*"npx "*) ;;
     *) exit 0 ;;
@@ -55,66 +57,69 @@ fi
 
 require_jq
 
-# ── 메모리 비대화 ─────────────────────────────────────────────────
-# 관측: 이 기계의 한 프로젝트 메모리에 파일 144개, 다른 곳에 prd_*8·todo_*7 이 반년째 방치.
+# ── Memory bloat ──────────────────────────────────────────────────
+# Observed on the machine this was built for: 144 files in one project's memory,
+# and 8 prd_* plus 7 todo_* files untouched for half a year in another.
 case "$file_path" in
   */.claude/projects/*/memory/*)
     base=$(basename "$file_path")
     case "$base" in
       prd_*|todo_*|task_*|plan_*|log_*)
-        deny_json "[midnight] 메모리에는 진행 중인 일을 적지 않습니다 — '$base'.
+        deny_json "[midnight] Work in flight doesn't belong in memory — '$base'.
 
-PRD·할 일·작업 기록은 .claude/prd.md 한 장에 있고 끝나면 사라집니다. 메모리는 다음 세션에도 참인 사실만 담습니다." ;;
+The PRD, the tasks and the running notes live in .claude/prd.md and disappear when the work is done.
+Memory is for facts that will still be true in the next session." ;;
     esac
     dir=$(dirname "$file_path")
     if [ ! -e "$file_path" ] && [ "$(ls "$dir" 2>/dev/null | wc -l | tr -d ' ')" -ge "$MAX_MEMORY_FILES" ]; then
-      deny_json "[midnight] 이 프로젝트 메모리가 예산(${MAX_MEMORY_FILES}개)을 넘었습니다 — $dir
+      deny_json "[midnight] This project's memory is over budget (${MAX_MEMORY_FILES} files) — $dir
 
-새 파일을 만들지 말고, 같은 사실을 담은 기존 파일에 합치거나 더는 참이 아닌 것을 지우고 쓰세요."
+Don't add another file. Merge into the one that already holds this fact, or delete what stopped being true."
     fi
     exit 0 ;;
 esac
 
-# PRD 자체는 언제나 쓸 수 있다. 접수를 막으면 아무것도 시작할 수 없다.
+# The PRD itself is always writable. Blocking intake makes it impossible to start.
 case "$file_path" in */.claude/prd.md|.claude/prd.md) exit 0 ;; esac
 
-# ── 국면별 판정 ───────────────────────────────────────────────────
+# ── Per-phase decision ────────────────────────────────────────────
 if [ "$state" = "running" ]; then
   plan=$("$MV_ROOT/bin/prd-hash" "$prd")
   approved=$(fm "$prd" approved)
   seen=$(fm "$prd" seen)
   body=$(body_hash "$prd")
   missing=""
-  section_empty "$prd" "미정" || missing="${missing}· ## 미정 에 답 안 된 항목이 남아 있습니다.
+  section_empty "$prd" "Open questions" || missing="${missing}· ## Open questions still has unanswered items.
 "
-  [ -n "$plan" ] || missing="${missing}· ## 계획 이 비어 있습니다.
+  [ -n "$plan" ] || missing="${missing}· ## Plan is empty.
 "
-  [ "$seen" = "$body" ] || missing="${missing}· 사용자가 본 PRD(seen=${seen:-없음})와 지금 PRD(${body})가 다릅니다 — 고친 PRD 를 다시 보이고 답을 받으세요.
+  [ "$seen" = "$body" ] || missing="${missing}· The PRD the user saw (seen=${seen:-none}) differs from the current one (${body}) — show the revised PRD and get a reply.
 "
   if [ -n "$plan" ] && [ "$approved" != "$plan" ]; then
-    missing="${missing}· 승인된 계획(approved=${approved:-없음})이 지금 계획(${plan})과 다릅니다 — 계획이 바뀌었으면 다시 승인받으세요.
+    missing="${missing}· The approved plan (approved=${approved:-none}) differs from the current one (${plan}) — the plan changed, so get it approved again.
 "
   elif [ -n "$plan" ] && ! advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "APPROVED plan#${plan}"; then
-    missing="${missing}· 이 세션의 트랜스크립트에 advisor 의 'APPROVED plan#${plan}' 가 없습니다 — 승인은 advisor 서브에이전트의 결과로만 인정합니다(본문에 쓴 문장은 인정하지 않습니다).
+    missing="${missing}· This session's transcript has no 'APPROVED plan#${plan}' from the advisor — approval counts only from the advisor subagent's result, never from a sentence in a reply.
 "
   fi
   [ -z "$missing" ] && exit 0
-  deny_json "[midnight] 실행(running) 국면의 증거가 모자랍니다.
+  deny_json "[midnight] Not enough evidence for the 'running' phase.
 
 $missing
-Agent(subagent_type: advisor)에 'MODE: approve' 로 계획을 올리고 승인을 받은 뒤 계속하세요."
+Send the plan to Agent(subagent_type: advisor) with 'MODE: approve', then continue."
 fi
 
-# PRD 전 국면: 작은 일은 그냥 한다. 오타 하나 고치는 데 PRD 를 쓰게 하면 하네스가 방해물이 된다.
+# Before the PRD: small work just happens. Making someone write a PRD to fix a typo
+# turns the harness into an obstacle.
 read -r nfiles nlines <<< "$(request_size "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" "$file_path" "$pending")"
 if [ "${nfiles:-1}" -le "$MAX_FILES" ] && [ "${nlines:-0}" -le "$MAX_LINES" ]; then
   exit 0
 fi
 
-deny_json "[midnight] 아직 PRD 가 서지 않았습니다 (state=$state, 파일 ${nfiles}개·${nlines}줄 — 자동 통과는 ${MAX_FILES}개·${MAX_LINES}줄까지).
+deny_json "[midnight] No PRD yet (state=$state; ${nfiles} file(s), ${nlines} lines — auto-pass is ${MAX_FILES} files and ${MAX_LINES} lines).
 
-.claude/prd.md 를 만들고 이 순서로 가세요.
- 1) ## 미정 에 물어야 할 것을 5개 이하로, 항목마다 기본값과 함께 적는다 → state: prd 로 두고 사용자에게 보인다
- 2) 답을 받아 ## 결정 에 옮기고 ## 미정 을 비운다 → state: planned
- 3) ## 계획 을 쓰고 advisor(MODE: approve)에게 승인받는다 → state: running
-그 뒤로는 끝까지 묻지 않고 갑니다."
+Create .claude/prd.md and go in this order.
+ 1) Put what must be asked under ## Open questions — five or fewer, each with a default → set state: prd and show it to the user
+ 2) Move the answers into ## Decisions and empty ## Open questions → state: planned
+ 3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
+After that it runs to the end without asking."

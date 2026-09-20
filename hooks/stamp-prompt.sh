@@ -1,9 +1,10 @@
 #!/bin/bash
-# UserPromptSubmit. state: prd 일 때만, 사용자가 방금 본 PRD 본문의 hash 를 seen: 에 찍는다.
+# UserPromptSubmit. Only while state is `prd`: stamp `seen:` with the hash of the PRD
+# the user just saw.
 #
-# 이 한 줄이 "사용자가 합의했다"의 유일한 증거다 — 사용자 메시지는 모델이 만들어 낼 수
-# 없는 유일한 사건이기 때문이다. 프롬프트 내용은 읽지 않는다(읽으면 그 순간 게이트가
-# 모델이 쓴 문장에 걸리게 된다).
+# That one line is the only evidence that the user agreed — a user message is the one
+# event a model cannot manufacture. The prompt's content is never read; reading it would
+# put the gate back at the mercy of text a model can write.
 set -u
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 input=$(cat)

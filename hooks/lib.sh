@@ -1,10 +1,10 @@
 #!/bin/bash
-# midnight-vibe 훅 공용부. 상태는 오직 `.claude/prd.md` 프론트매터에 있다 —
-# 대화 맥락에서 국면을 추론하지 않는다(압축·리셋에서 사라지므로).
+# Shared by the midnight-vibe hooks. The phase lives only in the frontmatter of
+# `.claude/prd.md` — never inferred from conversation, which vanishes at compaction.
 
 MV_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-# 훅보다 먼저 있는 스위치. 하네스가 망가졌을 때 사용자가 일을 못 하게 되면 안 된다.
+# A switch that sits in front of the hooks. A broken harness must never stop someone working.
 mv_off() {
   [ "${CLAUDE_HARNESS_OFF:-}" = "1" ] && return 0
   [ -e "${1:-.}/.claude/harness.off" ] && return 0
@@ -13,7 +13,7 @@ mv_off() {
 
 mv_prd() { printf '%s/.claude/prd.md' "${1:-.}"; }
 
-# 프론트매터 한 줄 읽기. 첫 `---` 블록만 본다.
+# Read one frontmatter line. Only the first `---` block counts.
 fm() {
   local file="$1" key="$2"
   [ -f "$file" ] || return 0
@@ -24,7 +24,7 @@ fm() {
   ' "$file"
 }
 
-# `## <제목>` 섹션의 알맹이가 비었는가 (목록 표시나 공백만 있으면 빈 것으로 본다).
+# Is the body of a `## <heading>` section empty (bullets or whitespace alone count as empty).
 section_empty() {
   local file="$1" head="$2" body
   [ -f "$file" ] || return 0
@@ -32,9 +32,9 @@ section_empty() {
   [ -z "$body" ]
 }
 
-# 트랜스크립트에서 **advisor 서브에이전트의 tool_result 본문만** 모은다.
-# assistant 가 쓴 텍스트는 보지 않는다 — 모델은 자기 텍스트에 승인 토큰을 쓸 수 있지만
-# tool_result 는 만들 수 없다. 게이트의 위조 방지는 전부 이 한 가지에 걸려 있다.
+# Collect **only the tool_result bodies of the advisor subagent** from the transcript.
+# Assistant text is never read — a model can write an approval token into its own reply,
+# but it cannot fabricate a tool_result. Every forgery guarantee rests on this one fact.
 advisor_results() {
   local transcript="$1" lines ids
   [ -n "$transcript" ] && [ -f "$transcript" ] || return 0
@@ -54,25 +54,25 @@ advisor_results() {
       | (.content | if type=="string" then . else (map(.text? // "") | join("\n")) end)' 2>/dev/null
 }
 
-# 게이트가 못 도는 채로 조용히 통과시키지 않는다.
+# Never pass silently while the gate isn't actually running.
 require_jq() {
   command -v jq >/dev/null 2>&1 && return 0
-  printf '[midnight] jq 가 없어 게이트가 돌지 않습니다. 통과시키지 않습니다 — jq 를 설치하세요.\n' >&2
+  printf '[midnight] jq is missing, so the gate cannot run. Refusing rather than passing — please install jq.\n' >&2
   exit 2
 }
 
-deny_json() {  # PreToolUse 에서 도구 호출을 거부하는 공식 형식
+deny_json() {  # The documented shape for denying a tool call from PreToolUse
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":%s}}\n' \
     "$(printf '%s' "$1" | jq -Rs .)"
   exit 0
 }
 
-block_stop() {  # Stop 에서 "끝내지 마라"
+block_stop() {  # From Stop: "do not end the turn"
   printf '{"decision":"block","reason":%s}\n' "$(printf '%s' "$1" | jq -Rs .)"
   exit 0
 }
 
-# 프론트매터를 뺀 PRD 본문의 hash. 사용자가 "본 판"을 이 값으로 식별한다.
+# Hash of the PRD body with frontmatter removed — identifies the version the user saw.
 body_hash() {
   local file="$1"
   [ -f "$file" ] || return 0
@@ -80,8 +80,9 @@ body_hash() {
     | sed 's/[[:space:]]*$//' | shasum -a 256 2>/dev/null | cut -c1-8
 }
 
-# 이번 요청에서 고친 파일 수와 바뀐 줄 수. 세션 누적으로 세면 앞 요청이 컸다는 이유로
-# 다음 오타 수정까지 막힌다 — 범위는 마지막 사용자 지시 이후다.
+# Files touched and lines changed in THIS request. Counting per session would block the
+# next typo fix just because the previous request was large — the window starts at the
+# last user instruction.
 request_size() {
   local transcript="$1" pending_path="$2" pending_lines="$3" lines boundary touched files count
   lines=""
@@ -92,8 +93,8 @@ request_size() {
       lines=$(cat "$transcript" 2>/dev/null)
     fi
   fi
-  # 훅 자신의 차단 안내문은 경계로 치지 않는다 — 치면 막힌 뒤 카운터가 0이 되어 그다음
-  # 편집이 그냥 통과한다(게이트가 자기 안내문으로 열린다).
+  # The hook's own block message is not a boundary — if it were, the counter would reset
+  # after every block and the next edit would sail through (the gate opening itself).
   boundary=$(printf '%s\n' "$lines" | jq -R -r '
       fromjson? // empty
       | if .type=="user" then

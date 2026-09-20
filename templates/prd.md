@@ -5,22 +5,22 @@ seen:
 approved:
 loop: 0
 ---
-# <한 줄로 무엇을 만드는가>
+# <one line: what are we building>
 
-## 왜
-<이 일이 없으면 무엇이 안 되는가. 두 줄 이내.>
+## Why
+<What breaks if this doesn't exist. Two lines max.>
 
-## 완료 조건
-- [ ] <관측 가능한 것만. "잘 동작한다" 금지.>
+## Done when
+- [ ] <Observable only. "Works well" is not allowed.>
 
-## 미정
-- <물어야 할 것> — 기본값: <답이 없으면 이대로 간다>
+## Open questions
+- <What must be asked> — default: <what happens if you don't answer>
 
-## 결정
-<답을 받은 것만 여기로. 근거 한 줄씩.>
+## Decisions
+<Only what's been answered. One line of reasoning each.>
 
-## 계획
-<파일·순서·검증. 이 섹션의 해시에 advisor 승인이 걸린다.>
+## Plan
+<Files, order, verification. The advisor's approval binds to this section's hash.>
 
-## 할 일
-- [ ] <끝까지 자율로 도는 단위>
+## Tasks
+- [ ] <A unit that can run to completion unattended>

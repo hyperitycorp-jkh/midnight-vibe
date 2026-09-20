@@ -18,16 +18,16 @@ loop: {loop}
 ---
 # 목표
 
-## 미정
+## Open questions
 {undecided}
 
-## 결정
+## Decisions
 - 정해짐
 
-## 계획
+## Plan
 {plan}
 
-## 할 일
+## Tasks
 {todo}
 """
 
@@ -101,7 +101,7 @@ make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="f
 check("running + seen 불일치(사용자가 본 PRD 아님) → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
 make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto", undecided="- 못 정한 것")
-check("running + ## 미정 남음 → 차단",
+check("running + ## Open questions 남음 → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
 
 # ── 질문 누출 ─────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 #!/bin/bash
-# 프론트매터를 뺀 PRD 본문의 hash. 사용자가 "본 판"을 이 값으로 식별한다.
+# First 8 chars of the sha256 of the PRD body, frontmatter excluded.
+# This is how "the version the user actually saw" is identified.
 set -u
 source "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")/hooks/lib.sh"
 body_hash "${1:-.claude/prd.md}"

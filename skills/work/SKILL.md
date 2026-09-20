@@ -1,46 +1,48 @@
 ---
 name: work
-description: 새 일을 받았을 때의 인터뷰 절차와 PRD 한 장 쓰는 법. state 가 interview·prd 일 때 따른다.
+description: The interview procedure and how to write the one-page PRD. Follow this while state is interview or prd.
 ---
 
-# 착수 전에 하는 일
+# Before you start
 
-PRD 가 서기 전에는 큰 편집이 막힌다. 막혔다고 우회하지 말고 이 순서로 간다.
+Large edits are blocked until a PRD is agreed. Don't work around the block — follow this order.
 
-## 1. 이미 정해진 것부터 읽는다
+## 1. Read what's already decided
 
-`${CLAUDE_PLUGIN_ROOT}/conventions/` 와 프로젝트 `CLAUDE.md` 를 먼저 읽는다. 작업 폴더에는
-`conventions/` 가 없다 — 그건 플러그인 안에 있다. 새 앱을 만드는 일이면
-`${CLAUDE_PLUGIN_ROOT}/kits/` 에 맞는 출발점이 있는지부터 본다(`/midnight-vibe:new`) —
-있으면 거기서 시작하고, 구조를 새로 정하지 않는다. **거기 적힌 것은 묻지 않는다.**
-사용자가 오래 지켜 온 관행을 다시 묻는 것이 "대충 시작하는 것" 다음으로 나쁜 짓이다.
+Read `${CLAUDE_PLUGIN_ROOT}/conventions/` and the project's `CLAUDE.md` first. The working folder has
+no `conventions/` — it lives inside the plugin. **Never ask what's written there.** Re-asking someone's
+long-standing practice is the second worst thing after starting half-informed.
 
-## 2. `.claude/prd.md` 를 만든다
+If this is a new app, check `${CLAUDE_PLUGIN_ROOT}/kits/` for a starting point (`/midnight-vibe:new`).
+If one fits, start there and don't re-decide the structure.
 
-`templates/prd.md` 를 복사한다. `## 미정` 에 **정말 물어야 하는 것만 5개 이하로**, 항목마다
-기본값을 달아 적는다 — 기본값이 없는 질문은 질문이 아니라 떠넘기기다.
+## 2. Write `.claude/prd.md`
 
-물어야 하는 것: 되돌리기 어려운 선택, 비즈니스·데이터 결정, 관행에 없는 새 취향.
-묻지 말아야 하는 것: 코드를 읽으면 나오는 것, 관행에 이미 있는 것, 기본값이 뻔한 것.
+Copy `templates/prd.md`. Put **only what genuinely must be asked** under `## Open questions` —
+five or fewer, each with a default. A question without a default isn't a question, it's a hand-off.
 
-## 3. 보이고 답을 받는다
+Ask about: hard-to-reverse choices, business and data decisions, tastes no convention covers.
+Don't ask about: anything the code answers, anything a convention already settles, anything with an obvious default.
 
-`state: prd` 로 두고 멈춘다. 이때가 사용자에게 올라가는 두 자리 중 하나다.
-답을 `## 결정` 에 옮기고 `## 미정` 을 비운다. 답이 없는 항목은 기본값으로 정하고 그렇게 적는다.
+## 3. Show it and get a reply
 
-## 4. 계획을 쓰고 승인받는다
+Set `state: prd` and stop. This is one of the two places the turn goes back to the user.
+Move the answers into `## Decisions` and empty `## Open questions`. Anything unanswered takes its
+default — write that down as the decision.
 
-`## 계획` 에 파일·순서·검증을 적는다. `state: planned` 로 두고 `advisor` 에 `MODE: approve` 로 올린다.
-반려면 고쳐서 다시 올린다 — 사용자에게 올리지 않는다.
+## 4. Write the plan and get it approved
 
-## 5. 그 뒤로는 묻지 않는다
+Put files, order and verification under `## Plan`. Set `state: planned` and send it to `advisor`
+with `MODE: approve`. On rejection, fix and resubmit — this never goes to the user.
 
-`state: running`. `## 할 일` 을 하나씩 지운다. 막히면 `advisor` 에 묻는다.
-전제가 틀렸다고 드러나면 `state` 를 `planned` 로 되돌리고 계획을 고쳐 재승인받는다.
-**사용자에게 올라가는 두 번째이자 마지막 자리는 완료 보고다.**
+## 5. After that, don't ask
 
-## 6. 끝낼 때
+`state: running`. Work through `## Tasks` one at a time. When stuck, ask `advisor`.
+If a premise turns out to be wrong, set `state` back to `planned`, fix the plan and get it re-approved.
+**The second and last place the turn returns to the user is the final report.**
 
-`advisor` 에 `MODE: review`. 통과하면 다음 세션에도 참인 사실만 메모리에 옮기고
-(진행 중인 일·할 일·계획은 메모리에 넣지 않는다 — 훅이 막는다), `.claude/prd.md` 를 지운다.
-새로 굳은 관행이 생겼으면 `conventions/` 에 한 줄 더한다.
+## 6. Finishing
+
+Send it to `advisor` with `MODE: review`. Once it passes, move only facts that will still be true
+next session into memory (never the work in flight — the hooks block that), and delete `.claude/prd.md`.
+If a new practice hardened along the way, add a line to `conventions/`.

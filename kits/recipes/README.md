@@ -1,15 +1,16 @@
-# 레시피 — 복붙해서 쓰는 코드
+# Recipes — code you copy, not code you depend on
 
-붙이기 귀찮은 연동을 **동작하는 코드 한 장**으로 둔다. 패키지가 아니라 복사본이다.
+Integrations that are a pain to wire, kept as **one working file**. A copy, not a package.
 
-## 이 자리의 규칙
+## The rule here
 
-- **의존성을 만들지 않는다.** 레시피는 아무 데서도 import 되지 않는다. 쓸 때 복사해 간다.
-  그래서 여기 있는 코드가 낡아도 **어떤 앱도 깨지지 않는다** — 업데이트를 따라갈 일이 없다.
-- 각 레시피는 **언제 기준인지**와 공식 문서 링크를 맨 위에 적는다. 남이 쓰기 전에 그 날짜를 보고 판단한다.
-- 낡았다고 지우지 않는다. 날짜가 곧 경고다.
-- 버전을 맞추거나 CI 로 돌리지 않는다. 그렇게 하는 순간 관리 대상이 되고, 그건 이 저장소가 피하려는 것이다.
+- **They create no dependency.** Nothing imports a recipe — you copy it when you need it.
+  So when one goes stale, **no app breaks** and there is no upgrade to chase.
+- Each recipe states **what date it reflects** and links the official docs at the top.
+  Read that date before using it.
+- Stale recipes are not deleted. The date is the warning.
+- They are not version-pinned or run in CI. That would make them maintenance, which is the thing this repo avoids.
 
-| 레시피 | 무엇 | 기준일 |
+| Recipe | What | As of |
 |---|---|---|
-| `kakao-login/` | 카카오 OAuth 콜백 → Firebase 커스텀 토큰 (Next.js route handler) | 2026-09 |
+| `kakao-login/` | Kakao OAuth callback → Firebase custom token (Next.js route handler) | 2026-09 |
