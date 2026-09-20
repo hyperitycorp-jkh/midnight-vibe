@@ -62,6 +62,14 @@ Here there is **one `.claude/prd.md` while work is in flight**, and it deletes i
 /plugin install midnight-vibe
 ```
 
+Two lines because there are two steps. The first tells *your own* Claude Code that this git URL
+carries a plugin catalog; the second turns one of them on. Nothing is submitted anywhere and this
+repo isn't listed in any central registry — `marketplace add` only writes to your machine, and the
+only public thing is the GitHub repo itself.
+
+A plugin is a bundle of hooks, agents, skills and slash commands. Installing it wires them into
+every session, so there's nothing to symlink by hand and nothing to run per project.
+
 Needs `jq` and `git`. Without them the gates refuse rather than pass silently.
 Run `/midnight-vibe:doctor` to confirm it's actually wired in.
 
