@@ -1,23 +1,53 @@
-# midnight-vibe
+<h1 align="center">midnight-vibe</h1>
 
-A workbench for vibe coding — **gates, conventions, and kits** in one repo.
+<p align="center">
+  <b>It can't start without interviewing you. It can't finish without evidence.<br>
+  In between, it doesn't ask.</b>
+</p>
 
-It cannot start without interviewing you, and it cannot finish without evidence.
-In between, it doesn't ask. It just goes.
+<p align="center">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
+  <img alt="tests" src="https://img.shields.io/badge/tests-39%20passing-brightgreen">
+  <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
+  <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
+</p>
 
-> 한국어: [README.ko.md](README.ko.md)
+---
+
+A workbench for vibe coding — **gates, conventions and kits** in one repo.
+Gates are hooks that actually deny the tool call. Here is one, doing its job:
+
+```console
+$ claude
+> add the whole auth flow
+
+⏺ Write(src/auth/session.ts)
+  ⎿  [midnight] No PRD yet (state=none; 1 file, 64 lines — auto-pass is 2 files and 40 lines).
+
+     Create .claude/prd.md and go in this order.
+      1) Put what must be asked under ## Open questions — five or fewer, each with a default
+      2) Move the answers into ## Decisions and empty ## Open questions → state: planned
+      3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
+     After that it runs to the end without asking.
+```
+
+The phase driving that lives in one file, not in the conversation:
 
 ```mermaid
-stateDiagram-v2
-    [*] --> interview: "an edit above the auto-pass size is blocked"
-    interview --> prd: "writes a PRD, shows it to you"
-    prd --> planned: "you replied + ## Open questions is empty"
-    planned --> running: "advisor: APPROVED plan#hash"
-    running --> review: "## Tasks all done"
-    review --> done: "advisor: REVIEWED ok tree#hash"
-    running --> planned: "wrong premise → fix plan, re-approve"
-    done --> [*]: "memory budget met · prd.md deleted"
+flowchart LR
+    I(interview) --> P(prd) --> N(planned) --> R(running) --> V(review) --> D(done)
+    R -. "premise was wrong" .-> N
+    classDef s fill:#1e1b4b,stroke:#8b5cf6,color:#fff,rx:6
+    class I,P,N,R,V,D s
 ```
+
+| Phase | Advances when | Blocked by |
+|---|---|---|
+| `interview` → `prd` | a PRD is written and shown | edits over 2 files / 40 lines |
+| `prd` → `planned` | you replied and `## Open questions` is empty | the hash of the PRD you saw |
+| `planned` → `running` | `advisor` returns `APPROVED plan#<hash>` | the plan's own hash |
+| `running` → `review` | every `## Tasks` box is checked | Stop refuses while any remain |
+| `review` → `done` | `advisor` returns `REVIEWED ok tree#<hash>` | the working-tree hash |
 
 There are exactly **two** places where the turn comes back to you: when the PRD is shown,
 and the final report. In between, `AskUserQuestion` is denied and `Stop` is blocked,

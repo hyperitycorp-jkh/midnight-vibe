@@ -1,25 +1,56 @@
-# midnight-vibe
+<h1 align="center">midnight-vibe</h1>
 
-> English: [README.md](README.md)
+<p align="center">
+  <b>인터뷰 없이 착수하지 못하고, 증거 없이 끝나지 못한다.<br>
+  그 사이에는 묻지 않는다.</b>
+</p>
+
+<p align="center">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
+  <img alt="tests" src="https://img.shields.io/badge/tests-39%20passing-brightgreen">
+  <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
+  <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
+</p>
+
+---
 
 바이브 코딩을 위한 작업대 — **게이트 · 관행 · 킷**을 한 저장소에.
+게이트는 도구 호출을 실제로 거부하는 훅이다. 일하는 모습은 이렇다.
 
-인터뷰 없이 착수하지 못하고, 증거 없이 끝나지 못한다. 그 사이에는 묻지 않고 끝까지 간다.
+```console
+$ claude
+> 인증 흐름 통째로 붙여줘
 
-```mermaid
-stateDiagram-v2
-    [*] --> interview: "자동 통과 크기를 넘는 편집이 차단됨"
-    interview --> prd: "PRD 를 쓰고 사용자에게 보인다"
-    prd --> planned: "사용자 답장 + ## Open questions 가 빔"
-    planned --> running: "advisor: APPROVED plan#해시"
-    running --> review: "## Tasks 전부 완료"
-    review --> done: "advisor: REVIEWED ok tree#해시"
-    running --> planned: "전제 오류 → 계획 고쳐 재승인"
-    done --> [*]: "메모리 예산 통과 · prd.md 삭제"
+⏺ Write(src/auth/session.ts)
+  ⎿  [midnight] No PRD yet (state=none; 1 file, 64 lines — auto-pass is 2 files and 40 lines).
+
+     Create .claude/prd.md and go in this order.
+      1) Put what must be asked under ## Open questions — five or fewer, each with a default
+      2) Move the answers into ## Decisions and empty ## Open questions → state: planned
+      3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
+     After that it runs to the end without asking.
 ```
 
+그 국면은 대화가 아니라 파일 한 장에 적혀 있다.
+
+```mermaid
+flowchart LR
+    I(interview) --> P(prd) --> N(planned) --> R(running) --> V(review) --> D(done)
+    R -. "전제가 틀렸다" .-> N
+    classDef s fill:#1e1b4b,stroke:#8b5cf6,color:#fff,rx:6
+    class I,P,N,R,V,D s
+```
+
+| 국면 | 넘어가는 조건 | 무엇이 막나 |
+|---|---|---|
+| `interview` → `prd` | PRD 를 써서 보인다 | 2파일·40줄 넘는 편집 |
+| `prd` → `planned` | 답장을 받고 `## Open questions` 가 빈다 | 사용자가 본 PRD 의 해시 |
+| `planned` → `running` | `advisor` 가 `APPROVED plan#<해시>` | 계획 자신의 해시 |
+| `running` → `review` | `## Tasks` 가 전부 체크된다 | 남아 있으면 Stop 이 거부 |
+| `review` → `done` | `advisor` 가 `REVIEWED ok tree#<해시>` | 작업트리 해시 |
+
 사용자에게 턴이 넘어가는 자리는 **둘뿐**이다: PRD 를 보이는 자리와 완료 보고.
-그 사이에는 `AskUserQuestion` 도구가 막히고 Stop 도 막히므로 사용자 턴이 아예 생기지 않는다.
+그 사이에는 `AskUserQuestion` 이 거부되고 Stop 도 막히므로 사용자 턴이 아예 생기지 않는다.
 
 ## 왜 만들었나
 
