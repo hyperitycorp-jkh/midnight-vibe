@@ -1,0 +1,26 @@
+# fastlane — Flutter Android: Play Store metadata and screenshots, split apart.
+# Copy to android/fastlane/Fastfile. The service account JSON stays out of the repo:
+# point SUPPLY_JSON_KEY at it, or set it in Appfile.
+
+default_platform(:android)
+
+platform :android do
+  desc "Build the AAB and upload it to the internal track"
+  lane :binary do
+    gradle(task: "clean bundleRelease")
+    upload_to_play_store(track: "internal", aab: "../build/app/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Upload store text only — no binary, no images. Lands without a new version."
+  lane :metadata do
+    upload_to_play_store(skip_upload_apk: true, skip_upload_aab: true,
+                         skip_upload_changelogs: true, skip_upload_images: true,
+                         skip_upload_screenshots: true)
+  end
+
+  desc "Upload screenshots and the feature graphic only — leaves the text alone"
+  lane :screenshots do
+    upload_to_play_store(skip_upload_apk: true, skip_upload_aab: true,
+                         skip_upload_changelogs: true, skip_upload_metadata: true)
+  end
+end

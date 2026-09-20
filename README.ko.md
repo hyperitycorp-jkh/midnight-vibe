@@ -195,7 +195,7 @@ midnight-vibe/
 |---|---|
 | `kits/flutter-cubit-firebase` | Flutter + cubit + Firebase. repository 는 컬렉션 하나의 CRUD, 로직은 전부 cubit |
 | `kits/next-firebase` | Next.js(App Router) + Firebase. 설정은 전부 환경변수, App Check·Admin SDK 포함 |
-| `kits/recipes/` | 붙이기 귀찮은 연동(카카오 로그인 등)을 **복붙용 한 장**으로 |
+| `kits/recipes/` | 붙이기 귀찮은 것 — 카카오 로그인, fastlane 릴리즈·스토어 스크린샷 — 을 **복붙용**으로 |
 
 킷에는 **실제 Firebase 설정을 넣지 않는다.** Flutter 는 `firebase_options.dart.template` 만 두고
 실파일은 `.gitignore` — 새 앱은 `flutterfire configure` 로 자기 것을 만든다. 웹은 전부 환경변수다.

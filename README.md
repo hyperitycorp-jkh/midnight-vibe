@@ -199,7 +199,7 @@ Copy one, start, refine while you use it, and let the refinements come back to t
 |---|---|
 | `kits/flutter-cubit-firebase` | Flutter + cubit + Firebase. One repository per collection, CRUD only; all logic in cubits |
 | `kits/next-firebase` | Next.js (App Router) + Firebase. Config entirely from env; App Check and Admin SDK included |
-| `kits/recipes/` | Integrations that are a pain to wire (Kakao login, …) as **one copy-paste file** |
+| `kits/recipes/` | The parts that are a pain to wire — Kakao login, fastlane release and store screenshots — as **copy-paste files** |
 
 Kits carry **no real Firebase config**. Flutter ships only `firebase_options.dart.template` with the
 real file gitignored — a new app runs `flutterfire configure` for its own. The web kit is all env vars.

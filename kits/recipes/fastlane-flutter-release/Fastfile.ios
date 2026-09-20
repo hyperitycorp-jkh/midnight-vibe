@@ -1,0 +1,111 @@
+# fastlane — Flutter iOS: TestFlight, metadata, screenshots.
+# Copy to ios/fastlane/Fastfile. Everything app-specific comes from env; nothing is hardcoded.
+#
+#   APP_NAME            e.g. MyApp          (the .ipa name)
+#   APP_BUNDLE_ID       e.g. com.example.app
+#   APPLE_APP_ID        the numeric App Store Connect app id
+#   APPSTORE_API_KEY_ID / APPSTORE_ISSUER_ID / APPSTORE_API_KEY_CONTENT
+#   SCREENSHOT_HOOK     optional: a command run before any screenshot lane (generate them here)
+
+default_platform(:ios)
+
+APP_NAME      = ENV.fetch("APP_NAME", "Runner")
+APP_BUNDLE_ID = ENV.fetch("APP_BUNDLE_ID") { UI.user_error!("APP_BUNDLE_ID is required") }
+
+# Credentials come from env first, a key file second, and never from the repo.
+def asc_api_key_options
+  key_id    = ENV.fetch("APPSTORE_API_KEY_ID", "").strip
+  issuer_id = ENV.fetch("APPSTORE_ISSUER_ID", "").strip
+  key_body  = ENV.fetch("APPSTORE_API_KEY_CONTENT", "").strip
+
+  unless key_id.empty? || issuer_id.empty? || key_body.empty?
+    return { api_key: app_store_connect_api_key(
+      key_id: key_id, issuer_id: issuer_id, key_content: key_body,
+      is_key_content_base64: ENV.fetch("APPSTORE_API_KEY_CONTENT_BASE64", "false") == "true",
+      in_house: false) }
+  end
+
+  path = File.expand_path(ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH",
+                                    File.expand_path("keys/api_key.json", File.dirname(__FILE__))))
+  return { api_key_path: path } if File.exist?(path)
+
+  UI.user_error!("No App Store Connect credentials. Set APPSTORE_API_KEY_ID, APPSTORE_ISSUER_ID " \
+                 "and APPSTORE_API_KEY_CONTENT, or point APP_STORE_CONNECT_API_KEY_PATH at a key file.")
+end
+
+platform :ios do
+  before_all do |lane|
+    asc_api_key_options unless lane == :test
+    hook = ENV.fetch("SCREENSHOT_HOOK", "").strip
+    if !hook.empty? && [:screenshots, :screenshots_replace, :release_all].include?(lane)
+      sh(hook)   # regenerate screenshots right before they are uploaded, never after
+    end
+  end
+
+  desc "Build the IPA and upload it to TestFlight"
+  lane :binary do
+    build_app(
+      workspace: "Runner.xcworkspace", scheme: "Runner", clean: true,
+      export_method: "app-store", output_directory: "build/ios/ipa",
+      output_name: "#{APP_NAME}.ipa", skip_profile_detection: true,
+      export_options: { provisioningProfiles: { APP_BUNDLE_ID => "match AppStore #{APP_BUNDLE_ID}" } }
+    )
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      apple_id: ENV.fetch("APPLE_APP_ID") { UI.user_error!("APPLE_APP_ID is required") },
+      ipa: "build/ios/ipa/#{APP_NAME}.ipa",
+      **asc_api_key_options
+    )
+  end
+
+  desc "Upload store text only — no binary, no screenshots"
+  lane :metadata do
+    upload_to_app_store(skip_binary_upload: true, skip_screenshots: true, skip_metadata: false,
+                        force: true, precheck_include_in_app_purchases: false, **asc_api_key_options)
+  end
+
+  desc "Upload screenshots into EMPTY slots only — what is already live is kept"
+  lane :screenshots do
+    upload_to_app_store(skip_binary_upload: true, skip_metadata: true, skip_screenshots: false,
+                        overwrite_screenshots: false, force: true, **asc_api_key_options)
+  end
+
+  desc "REPLACE every screenshot — wipes what is live first. Know which one you want."
+  lane :screenshots_replace do
+    upload_to_app_store(skip_binary_upload: true, skip_metadata: true, skip_screenshots: false,
+                        overwrite_screenshots: true, force: true, **asc_api_key_options)
+  end
+
+  # App Store Connect has no "iPad only" upload, so stage a tree holding just the iPad files.
+  # Without this, pushing iPad shots wipes the iPhone ones.
+  desc "Upload iPad screenshots only, leaving iPhone untouched (files named *_ipad.png)"
+  lane :screenshots_ipad do
+    require "fileutils"
+    src = File.join(File.expand_path(File.dirname(__FILE__)), "screenshots")
+    tmp = File.join(File.expand_path(File.dirname(__FILE__)), "screenshots_ipad_tmp")
+    FileUtils.rm_rf(tmp); FileUtils.mkdir_p(tmp)
+
+    copied = 0
+    Dir.glob("#{src}/*").select { |d| File.directory?(d) }.each do |locale_dir|
+      Dir.glob("#{locale_dir}/*_ipad.png").each do |file|
+        dst = File.join(tmp, File.basename(locale_dir)); FileUtils.mkdir_p(dst)
+        FileUtils.cp(file, File.join(dst, File.basename(file).sub("_ipad.png", ".png")))
+        copied += 1
+      end
+    end
+    UI.user_error!("No *_ipad.png found under #{src}") if copied.zero?
+
+    upload_to_app_store(skip_binary_upload: true, skip_metadata: true, skip_screenshots: false,
+                        screenshots_path: tmp, overwrite_screenshots: true, force: true,
+                        **asc_api_key_options)
+    FileUtils.rm_rf(tmp)
+    UI.success("Pushed #{copied} iPad screenshots")
+  end
+
+  desc "Full release: binary, metadata, screenshots"
+  lane :release_all do
+    binary
+    metadata
+    screenshots
+  end
+end

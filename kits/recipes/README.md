@@ -14,3 +14,4 @@ Integrations that are a pain to wire, kept as **one working file**. A copy, not 
 | Recipe | What | As of |
 |---|---|---|
 | `kakao-login/` | Kakao OAuth callback → Firebase custom token (Next.js route handler) | 2026-09 |
+| `fastlane-flutter-release/` | Flutter → App Store / Play: TestFlight, metadata, and the screenshot lanes that don't wipe what's live | 2026-09 |
