@@ -13,6 +13,7 @@ MAX_FILES=2
 MAX_LINES=40
 MAX_MEMORY_FILES=12
 MAX_RULES_LINES=150
+MAX_TICKS_PER_WRITE=2
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
@@ -81,7 +82,30 @@ Don't add another file. Merge into the one that already holds this fact, or dele
 esac
 
 # The PRD itself is always writable. Blocking intake makes it impossible to start.
-case "$file_path" in */.claude/prd.md|.claude/prd.md) exit 0 ;; esac
+# One exception: ticking a pile of task boxes in a single write. The Stop gate's only evidence that
+# work happened is the model's own checkbox, and the cheapest way past it is to paint them all in at
+# the end ("the boxes were out of date, the hook is misjudging"). Boxes are ticked as work lands, or
+# they are not evidence of anything. Unticking is always fine.
+case "$file_path" in
+  */.claude/prd.md|.claude/prd.md)
+    if [ "$tool" = "Write" ]; then
+      was=$(grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]' "$file_path" 2>/dev/null)
+      now=$(printf '%s' "$input" | jq -r '.tool_input.content // ""' 2>/dev/null | grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]')
+    else
+      was=$(printf '%s' "$input" | jq -r '.tool_input | (.old_string // ([.edits[]?.old_string]|join("\n")) // "")' 2>/dev/null | grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]')
+      now=$(printf '%s' "$input" | jq -r '.tool_input | (.new_string // ([.edits[]?.new_string]|join("\n")) // "")' 2>/dev/null | grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]')
+    fi
+    if [ "$(( ${now:-0} - ${was:-0} ))" -gt "$MAX_TICKS_PER_WRITE" ]; then
+      require_jq
+      deny_json "[midnight] That write ticks $(( now - was )) task boxes at once (limit ${MAX_TICKS_PER_WRITE}).
+
+A box is ticked when that task lands, not in a batch at the end. If the work really is done, the
+boxes are not what proves it — say what you verified for each one, tick them as you go, and let the
+review gate check the result. If the boxes are wrong because the plan changed, set state back to
+planned and fix ## Tasks instead of repainting them."
+    fi
+    exit 0 ;;
+esac
 
 # ── Conventions: frozen while work is in flight, budgeted otherwise ──
 # The plan was approved against these rules. Editing the rule to make the work pass is the same

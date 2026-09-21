@@ -125,6 +125,26 @@ check("메모리 예산 초과 + 새 파일 → 차단",
 check("메모리 예산 초과 + 기존 파일 수정 → 통과",
       denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "f1.md")))), False)
 
+# ── 할 일 체크는 몰아 칠할 수 없다 ────────────────────────────────
+tmp = tempfile.mkdtemp()
+prd = make_project(tmp, state="running", todo="\n".join(f"- [ ] 일 {i}" for i in range(1, 11)))
+done_all = open(prd).read().replace("- [ ]", "- [x]")
+check("PRD 에 열 개를 한 번에 체크 → 차단(자기 신고로 게이트 열기)",
+      denied(run(EDIT, edit_payload(tmp, path=prd, content=done_all))), True)
+# 치환 횟수를 안 묶으면 "일 1" 이 "일 10" 도 같이 잡아 세 개가 된다
+two = open(prd).read().replace("- [ ] 일 1\n", "- [x] 일 1\n", 1).replace("- [ ] 일 2\n", "- [x] 일 2\n", 1)
+check("두 개까지는 통과(일이 끝날 때마다 칠하는 것)",
+      denied(run(EDIT, edit_payload(tmp, path=prd, content=two))), False)
+check("Edit 로 세 개를 한 번에 체크 → 차단",
+      denied(run(EDIT, {"tool_name": "Edit", "cwd": tmp, "transcript_path": "",
+                        "tool_input": {"file_path": prd,
+                                       "old_string": "- [ ] 일 1\n- [ ] 일 2\n- [ ] 일 3",
+                                       "new_string": "- [x] 일 1\n- [x] 일 2\n- [x] 일 3"}})), True)
+make_project(tmp, state="running", todo="\n".join(f"- [x] 일 {i}" for i in range(1, 11)))
+check("체크를 지우는 것은 언제나 통과",
+      denied(run(EDIT, edit_payload(tmp, path=prd,
+                                    content=open(prd).read().replace("- [x]", "- [ ]")))), False)
+
 # ── 관행 동결·예산 ────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
 plan_hash = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), prd], capture_output=True, text=True).stdout.strip()

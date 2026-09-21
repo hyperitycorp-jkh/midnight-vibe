@@ -32,7 +32,7 @@ bump_loop() {
 }
 
 if [ "$loop" -ge "$LOOP_CAP" ]; then
-  printf '{"systemMessage":%s}\n' "$(printf '[midnight] Hit the loop ceiling of %s, releasing the gate (state=%s). The scope may have been mis-measured — read .claude/prd.md and judge for yourself.' "$LOOP_CAP" "$state" | jq -Rs .)"
+  printf '{"systemMessage":%s}\n' "$(printf '[midnight] Hit the loop ceiling of %s, releasing the gate (state=%s). The scope may have been mis-measured — read .claude/prd.md and judge for yourself. If the harness got this wrong rather than the plan, /midnight-vibe:report sends the fix back to it.' "$LOOP_CAP" "$state" | jq -Rs .)"
   exit 0
 fi
 

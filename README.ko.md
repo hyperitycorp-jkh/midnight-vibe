@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-46%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-50%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
@@ -219,6 +219,7 @@ midnight-vibe/
 | 질문 누출 | 실행 국면의 `AskUserQuestion` | 답변 본문의 물음표 — 턴이 안 끝나므로 무해 |
 | 메모리 | `prd_`·`todo_` 류 생성, 예산 초과 신규 파일 | 이미 쌓인 것 — `done` 에서 정리를 강제할 뿐 |
 | 관행 | 일이 도는 중의 `CLAUDE.md` 수정, 예산 넘겨 늘리기 | 계획·diff 가 실제로 그걸 지키는지 — 그건 advisor 의 독해다 |
+| 할 일 | 한 번의 쓰기로 체크 세 개 이상 — 일이 끝날 때마다 칠하는 것이지 마지막에 몰아 칠하는 게 아니다 | 칠해진 게 진짜 됐는지 — 그건 검수 게이트가 잡는다 |
 
 **Stop 훅은 이미 나온 응답을 되돌리거나 고치지 못한다.** 할 수 있는 건 "끝내지 못하게" 하는 것뿐이고,
 그것도 상한이 있다. midnight-vibe 는 상한(기본 25회)에 닿으면 스스로 게이트를 풀고 알린다 —
@@ -268,7 +269,7 @@ ralph-loop 의존. 파일은 진행 중 `.claude/prd.md` 한 장이고 끝나면
 ## 검증
 
 ```bash
-python3 hooks/tests/gates.test.py      # 게이트 단위 33건 — 위반·오차단 양방향
+python3 hooks/tests/gates.test.py      # 게이트 단위 37건 — 위반·오차단 양방향
 python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done 연쇄
 ```
 
@@ -287,6 +288,15 @@ claude plugin install midnight-vibe@midnight-vibe
 **세션이 시작될 때 등록된 훅은 재설치로 바뀌지 않는다.** 새 버전이 깔리고 `claude plugin list` 에도
 그렇게 보이지만, 돌고 있는 세션은 새 세션을 열기 전까지 옛 훅 스크립트를 계속 부른다.
 방금 업데이트했는데 동작이 그대로라면 이유는 그것이다.
+
+## 하네스가 틀렸을 때
+
+막지 말아야 할 걸 막았거나, 메시지가 오해를 부르거나, 상한이 풀렸다면 그건 여기 버그지 우회할 일이
+아니다. `/midnight-vibe:report` 가 최소 재현으로 줄이고 `/midnight-vibe:doctor` 출력을 붙여서
+PR(깨지는 테스트 포함) 이나 이슈를 연다 — 쓰기 권한이 있으면 바로, 없으면 포크에서. 보내기 전에
+diff 를 먼저 보여 준다.
+
+설계대로 동작했는데 그냥 거슬린 거라면 버그가 아니다 — 그건 `/midnight-vibe:off` 다.
 
 ## 끄기
 

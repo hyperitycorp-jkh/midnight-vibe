@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-46%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-50%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
@@ -223,6 +223,7 @@ is re-checked on every action.
 | No questions leak | `AskUserQuestion` during the run phase | Question marks in prose — harmless, since the turn can't end |
 | Memory | Creating `prd_`/`todo_`-style files, new files over budget | What's already piled up — it only forces cleanup at `done` |
 | Conventions | Editing `CLAUDE.md` while work is in flight; growing it past budget | Whether the plan or the diff actually follows them — that's the advisor's reading |
+| Tasks | Ticking more than two boxes in one write — they're ticked as work lands, not painted in at the end | Whether a ticked box was really done; the review gate is what catches that |
 
 **A Stop hook cannot undo or edit a reply that has already been produced.** All it can do is refuse to
 let the turn end, and even that has a ceiling. midnight-vibe releases its own gate at the ceiling
@@ -276,7 +277,7 @@ it's triggered by a `state` value, not a slash command.
 ## Verify
 
 ```bash
-python3 hooks/tests/gates.test.py      # 33 gate cases — both violations and false blocks
+python3 hooks/tests/gates.test.py      # 37 gate cases — both violations and false blocks
 python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
 ```
 
@@ -295,6 +296,15 @@ claude plugin install midnight-vibe@midnight-vibe
 **Hooks registered when a session started do not swap on reinstall.** A new version installs fine and
 `claude plugin list` shows it, but the running session keeps calling the old hook scripts until you
 start a fresh session. If you just updated and the behaviour looks unchanged, that's why.
+
+## When the harness is wrong
+
+A gate that blocks work it shouldn't, a message that misleads, a ceiling that releases — that's a bug
+here, not something to route around.  reduces it to the smallest repro,
+attaches , and opens a PR (with a failing test) or an issue, directly if you
+have write access and from a fork if you don't. It shows you the diff before anything is sent.
+
+A gate that worked as designed and merely got in your way isn't a bug — that's .
 
 ## Turning it off
 
