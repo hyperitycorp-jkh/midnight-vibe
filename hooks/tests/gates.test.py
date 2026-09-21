@@ -137,7 +137,14 @@ for cmd in ("ls -la 2>/dev/null",
 
 for cmd in ("echo hi > out.txt",
             "sed -i '' s/a/b/ lib/x.dart",
-            "cp a b"):
+            "cp a b",
+            # `>&` 는 뒤에 숫자나 `-` 가 와야 fd 복제다. 파일 이름이 오면 bash 는
+            # 두 스트림을 그 파일로 보낸다 — 진짜 쓰기다. 리다이렉션을 걷어내는
+            # 정규식이 이걸 같이 지워서 한때 통과시켰다.
+            "echo hi >&out.txt",
+            "echo hi >& out.txt",
+            "echo hi >&1x",
+            "echo hi &>out.txt"):
     check(f"진짜 쓰기는 막는다 — {cmd[:28]}", denied(run(EDIT, bash_payload(cmd))), True)
 check("running + assistant 텍스트에만 APPROVED → 차단(위조 불가)",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_text))), True)
