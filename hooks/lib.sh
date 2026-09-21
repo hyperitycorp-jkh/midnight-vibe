@@ -82,11 +82,17 @@ block_stop() {  # From Stop: "do not end the turn"
   exit 0
 }
 
-# Hash of the PRD body with frontmatter removed — identifies the version the user saw.
+# Hash of what the user agreed to — identifies the version the user saw.
+# Sections the procedure itself rewrites after the reply are left out: answers move out of
+# Open questions into Decisions, then Plan and Tasks get written. Hashing those made every
+# PRD fail `seen` the moment the documented flow was followed. Open questions stays covered
+# by its own emptiness check, and Plan by the advisor's approval hash.
 body_hash() {
   local file="$1"
   [ -f "$file" ] || return 0
-  awk 'NR==1 && $0=="---"{inb=1;next} inb && $0=="---"{inb=0;next} !inb' "$file" \
+  awk 'NR==1 && $0=="---"{inb=1;next} inb && $0=="---"{inb=0;next} inb{next}
+       /^## /{skip = ($0 ~ /^## (Open questions|Decisions|Plan|Tasks)[[:space:]]*$/)}
+       !skip' "$file" \
     | sed 's/[[:space:]]*$//' | shasum -a 256 2>/dev/null | cut -c1-8
 }
 
