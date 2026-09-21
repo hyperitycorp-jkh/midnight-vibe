@@ -300,11 +300,11 @@ start a fresh session. If you just updated and the behaviour looks unchanged, th
 ## When the harness is wrong
 
 A gate that blocks work it shouldn't, a message that misleads, a ceiling that releases — that's a bug
-here, not something to route around.  reduces it to the smallest repro,
-attaches , and opens a PR (with a failing test) or an issue, directly if you
-have write access and from a fork if you don't. It shows you the diff before anything is sent.
+here, not something to route around. `/midnight-vibe:report` reduces it to the smallest repro,
+attaches `/midnight-vibe:doctor`, and opens a PR (with a failing test) or an issue — directly if you
+have write access, from a fork if you don't. It shows you the diff before anything is sent.
 
-A gate that worked as designed and merely got in your way isn't a bug — that's .
+A gate that worked as designed and merely got in your way isn't a bug — that's `/midnight-vibe:off`.
 
 ## Turning it off
 
