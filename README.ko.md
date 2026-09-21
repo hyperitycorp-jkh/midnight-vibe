@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-50%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-75%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
@@ -62,6 +62,7 @@ flowchart LR
 
 | 국면 | 넘어가는 조건 | 무엇이 막나 |
 |---|---|---|
+| `intake` → `prd` | "다 말했다" | PRD 말고 **모든** 편집, 크기와 무관 |
 | `interview` → `prd` | PRD 를 써서 보인다 | 2파일·40줄 넘는 편집 |
 | `prd` → `planned` | 답장을 받고 `## Open questions` 가 빈다 | 사용자가 본 PRD 의 해시 |
 | `planned` → `running` | `advisor` 가 `APPROVED plan#<해시>` | 계획 자신의 해시 |
@@ -164,13 +165,20 @@ touch CLAUDE.md          # "## Conventions" 절에, 이 프로젝트가 이미 �
 막힌다. 게이트를 끄고 그 일을 끝내거나(`mkdir -p .claude && touch .claude/harness.off`),
 다음 변경부터 인터뷰로 시작하면 된다.
 
-### 4. 작은 수정은 그냥 한다
+### 4. 여러 개를 한꺼번에 말할 때
+
+먼저 그렇게 말한다 — "몇 가지 말할게". 그러면 `state: intake` 로 두고, 말하는 **즉시** 한 줄씩
+PRD 에 적고(압축돼도 목록이 남게), 항목마다 한 줄로만 받고, 다 말했다고 할 때까지 아무것도 고치지
+않는다. 그다음 관련된 것끼리 묶어서 평소 흐름으로 간다. 듣는 동안에는 두 줄짜리 수정도 막힌다 —
+1번에서 고친 게 6번과 부딪히는 게 바로 그 수정이다.
+
+### 5. 작은 수정은 그냥 한다
 
 오타 하나 고치는 데 PRD 를 쓰게 하면 하네스가 방해물이다.
 **2파일·40줄 이하는 게이트가 보이지도 않는다** — 그냥 고쳐지고 그냥 끝난다.
 문턱은 `hooks/gate-edit.sh` 의 `MAX_FILES`·`MAX_LINES` 에 있다.
 
-### 5. 하네스가 막았을 때
+### 6. 하네스가 막았을 때
 
 차단 메시지는 **무엇이 모자란지**를 적어 준다 — "seen 이 다르다"면 고친 PRD 를 다시 보이라는 뜻이고,
 "APPROVED 가 없다"면 `advisor` 를 안 불렀다는 뜻이다. 우회하려 들지 말고 그 한 줄을 읽으면 된다.
@@ -269,7 +277,7 @@ ralph-loop 의존. 파일은 진행 중 `.claude/prd.md` 한 장이고 끝나면
 ## 검증
 
 ```bash
-python3 hooks/tests/gates.test.py      # 게이트 단위 37건 — 위반·오차단 양방향
+python3 hooks/tests/gates.test.py      # 게이트 단위 62건 — 위반·오차단 양방향
 python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done 연쇄
 ```
 

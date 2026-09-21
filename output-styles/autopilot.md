@@ -17,6 +17,7 @@ description: Ask while the phase allows it, never after. Conclusion first, kept 
 
 | Phase | To the user | When stuck |
 |---|---|---|
+| intake | **listen** — one line back per item, nothing changes but the PRD | ask only what's unclear |
 | interview · prd | **ask** — five or fewer, each with a default | ask away |
 | planned · running · review | **don't** (the tool itself is denied) | ask the `advisor` |
 | done | one final report | — |

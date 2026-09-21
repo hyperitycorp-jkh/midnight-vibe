@@ -37,11 +37,11 @@ if [ "$loop" -ge "$LOOP_CAP" ]; then
 fi
 
 case "$state" in
-  interview|prd|none) exit 0 ;;   # the only places the turn may go back to the user
+  intake|interview|prd|none) exit 0 ;;   # the only places the turn may go back to the user
 
   planned)
     bump_loop
-    block_stop "[midnight] The plan hasn't been approved yet. Don't stop here — send ## Plan to Agent(subagent_type: advisor) with 'MODE: approve'. On approval set state to running and carry on. On rejection, fix the plan and resubmit — this does not go to the user." ;;
+    block_stop "[midnight] The plan hasn't been approved yet. Don't stop here — send ## Plan to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: approve'. On approval set state to running and carry on. On rejection, fix the plan and resubmit — this does not go to the user." ;;
 
   running)
     left=$(awk '/^## Tasks[[:space:]]*$/{f=1;next} /^## /{f=0} f && /^[[:space:]]*-[[:space:]]*\[[[:space:]]\]/' "$prd" 2>/dev/null)
@@ -54,7 +54,7 @@ $left
 Keep going. If you're stuck, ask the advisor — not the user. If the premise turned out wrong, set state back to planned, fix the plan and get it approved again."
     fi
     bump_loop
-    block_stop "[midnight] Every task is done. Go to review — set state to review and send it to Agent(subagent_type: advisor) with 'MODE: review'." ;;
+    block_stop "[midnight] Every task is done. Go to review — set state to review and send it to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: review'." ;;
 
   review)
     tree=$("$MV_ROOT/bin/tree-hash" "$cwd")
@@ -63,7 +63,10 @@ Keep going. If you're stuck, ask the advisor — not the user. If the premise tu
       block_stop "[midnight] Review passed (tree#${tree}). Wrap up — move anything worth keeping into memory, delete .claude/prd.md, then write the final report."
     fi
     bump_loop
-    block_stop "[midnight] No review evidence. Send it to Agent(subagent_type: advisor) with 'MODE: review' and get 'REVIEWED ok tree#${tree}'.
+    if advisor_ran_in_background "$(printf '%s' "$input" | jq -r '.transcript_path // empty')"; then
+      block_stop "[midnight] No review evidence. ${BACKGROUND_HINT}"
+    fi
+    block_stop "[midnight] No review evidence. Send it to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: review' and get 'REVIEWED ok tree#${tree}'.
 
 On rejection (REVIEWED fix:), fix those items and resubmit — the tree hash changes with the code, so an old pass is void on its own." ;;
 

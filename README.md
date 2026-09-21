@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-50%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-75%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
@@ -62,6 +62,7 @@ flowchart LR
 
 | Phase | Advances when | Blocked by |
 |---|---|---|
+| `intake` → `prd` | you said you're done telling it things | **every** edit but the PRD, whatever its size |
 | `interview` → `prd` | a PRD is written and shown | edits over 2 files / 40 lines |
 | `prd` → `planned` | you replied and `## Open questions` is empty | the hash of the PRD you saw |
 | `planned` → `running` | `advisor` returns `APPROVED plan#<hash>` | the plan's own hash |
@@ -168,13 +169,21 @@ Mid-flight work is the one case to handle first. A project already deep in a cha
 every sizeable edit will be stopped. Either finish that work with the gates off
 (`mkdir -p .claude && touch .claude/harness.off`) or let the next change start from an interview.
 
-### 4. Small edits stay small
+### 4. Telling it several things at once
+
+Say so first — "I've got a few things". It sets `state: intake`, writes each item into the PRD the
+moment you say it (so the list survives compaction), answers each with one line, and changes nothing
+else until you say you're done. Then it groups what belongs together and the normal path starts. While
+it's listening, even a two-line fix is denied — that's the fix that gets made on item 1 and then
+contradicts item 6.
+
+### 5. Small edits stay small
 
 Making someone write a PRD to fix a typo turns the harness into an obstacle.
 **Two files and 40 lines or fewer and the gates are invisible** — it just gets fixed and it just ends.
 The thresholds are `MAX_FILES` and `MAX_LINES` in `hooks/gate-edit.sh`.
 
-### 5. When it blocks you
+### 6. When it blocks you
 
 The block message says **what evidence is missing** — "seen doesn't match" means show the revised PRD
 again; "no APPROVED" means `advisor` was never called. Read that one line instead of working around it.
@@ -277,7 +286,7 @@ it's triggered by a `state` value, not a slash command.
 ## Verify
 
 ```bash
-python3 hooks/tests/gates.test.py      # 37 gate cases — both violations and false blocks
+python3 hooks/tests/gates.test.py      # 62 gate cases — both violations and false blocks
 python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
 ```
 

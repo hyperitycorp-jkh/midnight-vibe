@@ -218,6 +218,33 @@ check("CLAUDE.md 줄 예산 초과 + Edit 로 한 줄 늘리기 → 차단",
 check("CLAUDE.md 줄 예산 초과 + 합치거나 지워서 줄이기 → 통과",
       denied(run(EDIT, edit_payload(tmp, path=rules, content="x\n" * 20))), False)
 
+# ── 실제 트랜스크립트 모양: 백그라운드로 부른 advisor ─────────────
+# 픽스처는 실제 세션에서 뜬 것이다(구조 그대로, 내용만 교체). 지어낸 모양으로 테스트하다가
+# 네임스페이스 이름 버그를 놓친 적이 있다 — 모양은 기록에서 가져온다.
+FIX = os.path.join(ROOT, "hooks", "tests", "fixtures", "advisor-background.jsonl")
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
+plan_hash = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), prd], capture_output=True, text=True).stdout.strip()
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto")
+p = run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=FIX))
+check("백그라운드로 부른 advisor → 차단(판결이 tool_result 에 없다)", denied(p), True)
+check("그 차단 메시지가 run_in_background: false 를 알려준다", "run_in_background: false" in p.stdout, True)
+make_project(tmp, state="review")
+p = run(STOP, {"cwd": tmp, "transcript_path": FIX})
+check("review 에서도 같은 안내", "run_in_background: false" in p.stdout, True)
+
+# ── intake: 다 듣고 한 번에 ───────────────────────────────────────
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="intake")
+check("intake 에서 두 줄짜리 수정도 차단(크기와 무관)",
+      denied(run(EDIT, edit_payload(tmp, content="a\nb"))), True)
+check("intake 에서 PRD 에 한 줄 적기 → 통과",
+      denied(run(EDIT, edit_payload(tmp, path=prd, content=open(prd).read() + "\n1. 제목이 계속 오늘\n"))), False)
+check("intake 에서 Bash 쓰기 → 차단",
+      denied(run(EDIT, {"tool_name": "Bash", "cwd": tmp, "tool_input": {"command": "echo x > a.ts"}})), True)
+check("intake 에서 읽기 명령 → 통과",
+      denied(run(EDIT, {"tool_name": "Bash", "cwd": tmp, "tool_input": {"command": "ls -la"}})), False)
+check("intake 에서 되묻기 → 통과", denied(run(EDIT, {"tool_name": "AskUserQuestion", "cwd": tmp, "tool_input": {}})), False)
+check("intake 에서 멈추기 → 허용(매번 사용자 차례)", blocked(run(STOP, {"cwd": tmp})), False)
+
 # ── Stop ──────────────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
 check("running + 남은 할 일 → 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)

@@ -69,6 +69,22 @@ fi
 
 require_jq
 
+# ── Intake: listening, not doing ──────────────────────────────────
+# "I'll say several things — hear them all, then do it at once." While the person is still talking,
+# nothing but the PRD may change, whatever the size: a two-line fix is exactly what gets done on
+# item 1 and then contradicts item 6. Each item goes into .claude/prd.md as it's heard, so the list
+# survives compaction instead of living in the conversation.
+if [ "$state" = "intake" ]; then
+  case "$file_path" in
+    */.claude/prd.md|.claude/prd.md) ;;
+    *) deny_json "[midnight] Still listening (state=intake) — nothing but .claude/prd.md changes yet.
+
+Write what was just said under ## Intake as one numbered line, say you've got it, and wait for the
+next one. When they say they're done, group the items that belong together, turn them into the PRD,
+and set state to prd. The work starts after that, not during." ;;
+  esac
+fi
+
 # ── Memory bloat ──────────────────────────────────────────────────
 # Observed on the machine this was built for: 144 files in one project's memory,
 # and 8 prd_* plus 7 todo_* files untouched for half a year in another.
@@ -169,10 +185,14 @@ if [ "$state" = "running" ]; then
 "
   fi
   [ -z "$missing" ] && exit 0
+  if advisor_ran_in_background "$(printf '%s' "$input" | jq -r '.transcript_path // empty')"; then
+    missing="${missing}· ${BACKGROUND_HINT}
+"
+  fi
   deny_json "[midnight] Not enough evidence for the 'running' phase.
 
 $missing
-Send the plan to Agent(subagent_type: advisor) with 'MODE: approve', then continue."
+Send the plan to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: approve', then continue."
 fi
 
 # Before the PRD: small work just happens. Making someone write a PRD to fix a typo

@@ -12,3 +12,9 @@ Check these in order and report as a table. Fix what you can; for what you can't
 6. Whether the model the `advisor` agent needs is actually available on this account — without it, two gates never open.
 7. A live check that the hooks are really wired: attempt a write larger than the auto-pass size in a
    scratch directory with no PRD and confirm the tool call is denied.
+8. Whether editing `.claude/prd.md` asks for permission every time. Ticking tasks two at a time means
+   a long PRD becomes a dozen approval prompts, which is miserable from a phone. If
+   `~/.claude/settings.json` has no rule covering it, **show** the person these two lines for
+   `permissions.allow` and add them only if they say yes — it's their config:
+   `"Edit(**/.claude/prd.md)"`, `"Write(**/.claude/prd.md)"`. The harness owns that file; nothing
+   else is widened.

@@ -7,6 +7,18 @@ description: The interview procedure and how to write the one-page PRD. Follow t
 
 Large edits are blocked until a PRD is agreed. Don't work around the block — follow this order.
 
+## 0. When they say "I'll tell you several things"
+
+Don't start on the first one. Set `state: intake` in `.claude/prd.md` and **listen**.
+
+- Each item goes under `## Intake` as one numbered line **the moment it's said** — not held in the
+  conversation, where the next compaction loses it.
+- Reply in one line: that you've got it, and — only if it's genuinely unclear — what it means. No fixes,
+  no plans, no "I'll handle that". Nothing but the PRD can change in this phase; the hook denies the rest.
+- When they say they're done, **group what belongs together** (two complaints about the same screen are
+  one item; a smaller one that a bigger one absorbs goes away), then write the PRD from the grouped list
+  and set `state: prd`. From here it is the normal path: show it, get the reply, plan, approval, run.
+
 ## 1. Read what's already decided
 
 Read the project's `CLAUDE.md` first, then `${CLAUDE_PLUGIN_ROOT}/conventions/`.
@@ -33,6 +45,13 @@ Don't ask about: anything the code answers, anything a convention already settle
 Set `state: prd` and stop. This is one of the two places the turn goes back to the user.
 Move the answers into `## Decisions` and empty `## Open questions`. Anything unanswered takes its
 default — write that down as the decision.
+
+## How to call the advisor
+
+`Agent(subagent_type: "midnight-vibe:advisor", run_in_background: false)` — both parts matter.
+The plugin exposes the agent under its namespaced name; the short `advisor` doesn't exist. And the
+Agent tool runs in the background by default, in which case its tool_result is only "launched" and
+the verdict arrives later as a notification — the gate reads tool_results only, so it would never open.
 
 ## 4. Write the plan and get it approved
 

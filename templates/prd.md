@@ -7,6 +7,10 @@ loop: 0
 ---
 # <one line: what are we building>
 
+## Intake
+<Only when the person said "I'll tell you several things". One numbered line per item, as heard.
+Delete this section once the items are turned into the rest of the PRD.>
+
 ## Why
 <What breaks if this doesn't exist. Two lines max.>
 

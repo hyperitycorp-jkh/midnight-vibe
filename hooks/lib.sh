@@ -125,3 +125,15 @@ request_size() {
       | (.input.new_string // .input.content // ([.input.edits[]?.new_string]|join("\n")) // "")' 2>/dev/null | wc -l | tr -d ' ')
   printf '%s %s' "${files:-1}" "$(( ${count:-0} + ${pending_lines:-0} ))"
 }
+
+# The Agent tool runs subagents in the background by default. Then its tool_result is only
+# "Async agent launched successfully … agentId", and the verdict arrives later as a notification
+# — never as a tool_result. A gate that reads tool_results would then stay shut forever, so this
+# says exactly that instead of letting it look like the advisor never approved.
+advisor_ran_in_background() {
+  local transcript="$1"
+  [ -n "$transcript" ] && [ -f "$transcript" ] || return 1
+  grep -F 'Async agent launched' "$transcript" 2>/dev/null | grep -qF 'tool_result' || return 1
+  grep -F '"subagent_type"' "$transcript" 2>/dev/null | grep -qE '"subagent_type": ?"([^"]*:)?advisor"'
+}
+BACKGROUND_HINT="The advisor was launched in the background, so its verdict arrives as a notification and never as a tool_result — which is the only place the gate looks. Call Agent(subagent_type: midnight-vibe:advisor) again with run_in_background: false."
