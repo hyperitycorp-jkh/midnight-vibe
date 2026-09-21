@@ -154,6 +154,19 @@ check("running + approved 가 지금 계획과 다름 → 차단",
 make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="ffffffff")
 check("running + seen 불일치(사용자가 본 PRD 아님) → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
+# 문서대로 흐르면: 질문이 달린 PRD 를 보여주고 답을 받은 뒤, 답을 Decisions 로 옮기고 Plan 을 쓴다.
+# 그 재작성이 seen 을 깨면 절차를 지킨 모든 PRD 가 running 에서 막힌다.
+p_seen = make_project(tmp, state="prd", plan="", undecided="- 물을 것 — default: 기본", seen="auto")
+seen_q = [l for l in open(p_seen) if l.startswith("seen:")][0].split(":", 1)[1].strip()
+make_project(tmp, state="running", plan="1. 하나\n2. 둘", seen=seen_q)
+plan2 = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), p_seen], capture_output=True, text=True).stdout.strip()
+make_project(tmp, state="running", plan="1. 하나\n2. 둘", approved=plan2, seen=seen_q)
+tr_p2 = transcript(tmp, advisor_result=f"APPROVED plan#{plan2}", name="p2.jsonl")
+check("답을 Decisions·Plan 으로 옮긴 뒤에도 seen 유지 → 통과",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_p2))), False)
+open(p_seen, "w").write(open(p_seen).read().replace("# 목표", "# 바뀐 목표"))
+check("사용자가 본 목표가 바뀌면 → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_p2))), True)
 make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto", undecided="- 못 정한 것")
 check("running + ## Open questions 남음 → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
