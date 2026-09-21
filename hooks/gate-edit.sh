@@ -47,8 +47,13 @@ file_path=$(printf '%s' "$input" | jq -r '.tool_input.file_path // empty' 2>/dev
 pending=0
 if [ "$tool" = "Bash" ]; then
   cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)
+  # Strip redirections that write nothing before deciding. `2>/dev/null` and `2>&1`
+  # are on half the read-only commands anyone types; counting them as writes shut
+  # the gate on `ls`, `grep` and `git log` and taught people to work around it.
+  probe=$(printf '%s' "$cmd" \
+    | sed -e 's/[0-9]*>&[0-9]*//g' -e 's/[0-9]*>[[:space:]]*\/dev\/null//g')
   # Bail out fast when it doesn't look like a write — this runs on every Bash call.
-  case "$cmd" in
+  case "$probe" in
     *">"*|*"tee "*|*"sed -i"*|*"cp "*|*"mv "*|*"install "*|*"python3 -"*|*"npx "*) ;;
     *) exit 0 ;;
   esac

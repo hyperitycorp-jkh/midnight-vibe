@@ -36,19 +36,29 @@ section_empty() {
 # Assistant text is never read — a model can write an approval token into its own reply,
 # but it cannot fabricate a tool_result. Every forgery guarantee rests on this one fact.
 advisor_results() {
-  local transcript="$1" lines ids
+  local transcript="$1" ids id_lines result_lines
   [ -n "$transcript" ] && [ -f "$transcript" ] || return 0
-  if [ "$(wc -c < "$transcript" 2>/dev/null | tr -d ' ')" -gt 400000 ]; then
-    lines=$(tail -c 400000 "$transcript" 2>/dev/null | tail -n +2)
-  else
-    lines=$(cat "$transcript" 2>/dev/null)
-  fi
-  ids=$(printf '%s\n' "$lines" | jq -R -r '
+
+  # The transcript is JSONL — one object per line — so grep can narrow it to the
+  # handful of lines worth parsing. Scan the whole file: a byte window silently
+  # drops the approval once a session outgrows it, and the gate then stays shut
+  # with no way to reopen but re-running the advisor. Measured: a 10MB session
+  # greps in milliseconds, while jq over the same bytes takes seconds.
+  id_lines=$(grep -F '"subagent_type"' "$transcript" 2>/dev/null | grep -F 'advisor')
+  [ -z "$id_lines" ] && return 0
+
+  ids=$(printf '%s\n' "$id_lines" | jq -R -r '
       fromjson? // empty | select(.type=="assistant") | .message.content[]?
       | select(.type=="tool_use" and (.name=="Agent" or .name=="Task"))
-      | select((.input.subagent_type // "") == "advisor") | .id' 2>/dev/null)
+      | select((.input.subagent_type // "") | (. == "advisor" or endswith(":advisor"))) | .id' 2>/dev/null)
   [ -z "$ids" ] && return 0
-  printf '%s\n' "$lines" | jq -R -r --argjson ids "$(printf '%s\n' "$ids" | jq -R . | jq -s .)" '
+
+  # Only lines carrying one of those ids can hold an advisor result.
+  result_lines=$(grep -F -f <(printf '%s\n' "$ids") "$transcript" 2>/dev/null \
+    | grep -F '"tool_result"')
+  [ -z "$result_lines" ] && return 0
+
+  printf '%s\n' "$result_lines" | jq -R -r --argjson ids "$(printf '%s\n' "$ids" | jq -R . | jq -s .)" '
       fromjson? // empty | select(.type=="user") | .message.content[]?
       | select(.type=="tool_result") | select(.tool_use_id as $i | $ids | index($i))
       | (.content | if type=="string" then . else (map(.text? // "") | join("\n")) end)' 2>/dev/null
