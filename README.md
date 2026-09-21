@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-39%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-46%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
@@ -204,6 +204,7 @@ is re-checked on every action.
 | Review passed | Finishing with tasks left, or with no evidence | Summarizing the review honestly |
 | No questions leak | `AskUserQuestion` during the run phase | Question marks in prose — harmless, since the turn can't end |
 | Memory | Creating `prd_`/`todo_`-style files, new files over budget | What's already piled up — it only forces cleanup at `done` |
+| Conventions | Editing `CLAUDE.md` while work is in flight; growing it past budget | Whether the plan or the diff actually follows them — that's the advisor's reading |
 
 **A Stop hook cannot undo or edit a reply that has already been produced.** All it can do is refuse to
 let the turn end, and even that has a ceiling. midnight-vibe releases its own gate at the ceiling
@@ -230,9 +231,20 @@ Stale recipes are not deleted.
 
 ## What grows
 
-`conventions/` holds long-standing practices, one file each — the stack ones, the design system,
-and the working rules (for example: anything that varies by kind becomes an enum and an exhaustive
-lookup, never a prose string a new case can slip past). The interview reads these first,
+Two places hold what must never be asked again, and they are not equal.
+
+The **project's `CLAUDE.md`** is that project's own rules and it wins. `conventions/` in this repo is
+the author's defaults — stack rules, the design system, working rules (for example: anything that
+varies by kind becomes an enum and an exhaustive lookup, never a prose string a new case can slip
+past) — and each file carries an `applies:` line, so a Flutter rule is never held over your Next.js
+app. A decision made in the interview beats both: `## Decisions` is newer than any standing rule.
+
+When a practice hardens, the line goes into **that project's `CLAUDE.md`**, never into the plugin
+directory — that's a version-scoped cache the next install orphans. When the same line shows up in a
+second project, it has earned a PR to `conventions/` here.
+
+While work is in flight, `CLAUDE.md` is frozen: the plan was approved against those rules, so editing
+a rule to make the work pass is the same cheat as editing the plan after approval. The interview reads these first,
 and **what's written there is never asked again.** When a new practice hardens, add a line.
 That's where the harness grows.
 
@@ -246,7 +258,7 @@ it's triggered by a `state` value, not a slash command.
 ## Verify
 
 ```bash
-python3 hooks/tests/gates.test.py      # 26 gate cases — both violations and false blocks
+python3 hooks/tests/gates.test.py      # 33 gate cases — both violations and false blocks
 python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
 ```
 

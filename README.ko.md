@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-39%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-46%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
@@ -201,6 +201,7 @@ midnight-vibe/
 | 검수 통과 | 할 일이 남은 채 끝내기, 증거 없는 종료 | 검수 결과를 정직하게 요약하는 것 |
 | 질문 누출 | 실행 국면의 `AskUserQuestion` | 답변 본문의 물음표 — 턴이 안 끝나므로 무해 |
 | 메모리 | `prd_`·`todo_` 류 생성, 예산 초과 신규 파일 | 이미 쌓인 것 — `done` 에서 정리를 강제할 뿐 |
+| 관행 | 일이 도는 중의 `CLAUDE.md` 수정, 예산 넘겨 늘리기 | 계획·diff 가 실제로 그걸 지키는지 — 그건 advisor 의 독해다 |
 
 **Stop 훅은 이미 나온 응답을 되돌리거나 고치지 못한다.** 할 수 있는 건 "끝내지 못하게" 하는 것뿐이고,
 그것도 상한이 있다. midnight-vibe 는 상한(기본 25회)에 닿으면 스스로 게이트를 풀고 알린다 —
@@ -225,8 +226,19 @@ midnight-vibe/
 
 ## 쌓아 가는 것
 
-`conventions/` 에 오래 지켜 온 관행을 한 파일씩 둔다 — 스택별 규칙, 디자인 시스템, 그리고 일하는 방식
-(예: 종류마다 달라지는 것은 프롬프트 문자열이 아니라 enum 과 빠짐없는 표로 만든다). 인터뷰는 여기부터 읽고,
+다시 묻지 않을 것을 담는 자리는 둘이고, 둘은 대등하지 않다.
+
+**프로젝트의 `CLAUDE.md`** 가 그 프로젝트의 규칙이고 이긴다. 이 저장소의 `conventions/` 는 하네스
+저자의 기본값이다 — 스택 규칙, 디자인 시스템, 일하는 방식(예: 종류마다 달라지는 것은 프롬프트
+문자열이 아니라 enum 과 빠짐없는 표로). 파일마다 `applies:` 가 있어서 남의 Next 앱에 Flutter 규칙을
+들이대지 않는다. 인터뷰에서 내린 결정은 둘 다 이긴다 — `## Decisions` 가 어떤 상시 규칙보다 새것이다.
+
+관행이 굳으면 그 줄은 **그 프로젝트의 `CLAUDE.md`** 로 간다. 플러그인 디렉토리에 쓰지 않는다 —
+거긴 버전별 캐시라 다음 설치에 고아가 된다. 같은 줄이 두 번째 프로젝트에서 또 나오면, 그때
+여기 `conventions/` 로 PR 을 보낼 자격이 생긴 것이다.
+
+일이 도는 동안 `CLAUDE.md` 는 얼어 있다. 계획은 그 규칙을 기준으로 승인됐으니, 통과시키려고 규칙을
+고치는 건 승인 뒤 계획을 고치는 것과 같은 속임수다. 인터뷰는 여기부터 읽고,
 **여기 적힌 것은 다시 묻지 않는다.** 일이 끝나고 새로 굳은 관행이 생기면 한 줄 더한다 —
 하네스가 자라는 자리는 여기다.
 
@@ -239,7 +251,7 @@ ralph-loop 의존. 파일은 진행 중 `.claude/prd.md` 한 장이고 끝나면
 ## 검증
 
 ```bash
-python3 hooks/tests/gates.test.py      # 게이트 단위 26건 — 위반·오차단 양방향
+python3 hooks/tests/gates.test.py      # 게이트 단위 33건 — 위반·오차단 양방향
 python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done 연쇄
 ```
 

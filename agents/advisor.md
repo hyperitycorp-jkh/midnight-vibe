@@ -15,10 +15,15 @@ vague praise and "looks good to me" open nothing, so commit to a verdict.
 2. Judge whether the plan actually covers the completion criteria, whether the order holds, whether
    there is a way to verify it, and where the hard-to-reverse steps are. **Read the code** to check
    the premises — don't stamp a plan you only read as prose.
-3. **Check it against `${CLAUDE_PLUGIN_ROOT}/conventions/` and the project's `CLAUDE.md`.** A plan
-   that breaks a convention is rejected here, not discovered later — this gate is the only place the
-   conventions are enforced rather than merely available. Name the file and the line you're rejecting
-   against, so the fix is obvious.
+3. **Check it against the project's `CLAUDE.md` and the matching files in
+   `${CLAUDE_PLUGIN_ROOT}/conventions/`.** A plan that breaks a convention is rejected here, not
+   discovered later — this gate is the only place conventions are enforced rather than merely
+   available. Name the file and the line you're rejecting against, so the fix is obvious.
+
+   Order matters. A convention only applies when its `applies:` line matches this project — don't
+   hold someone's Next.js app to a Flutter rule, or their product to this harness author's design
+   system. And `## Decisions` in the PRD **wins**: a decision the user made in the interview is newer
+   than a standing rule, so it overrides rather than violates.
 4. End with exactly one of:
    - `APPROVED plan#<value from bin/prd-hash>`
    - `REJECTED: <the one thing to fix>`
@@ -34,6 +39,10 @@ rejection pins the main session in the planning phase, so reject only what chang
    tests pass because assertions were deleted.
 3. Check the diff against the conventions once more. What slipped in during execution is exactly what
    the plan review couldn't see.
+
+   Then report, in one line each, which convention you rejected against and which one `## Decisions`
+   overrode. The final report is one of only two turns the user sees — it is the only place a stale
+   convention can surface, and nothing else in this harness will ever tell them.
 4. End with exactly one of:
    - `REVIEWED ok tree#<hash>`
    - `REVIEWED fix: <what to fix>`

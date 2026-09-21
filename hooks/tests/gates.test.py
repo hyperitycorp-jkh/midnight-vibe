@@ -125,6 +125,25 @@ check("메모리 예산 초과 + 새 파일 → 차단",
 check("메모리 예산 초과 + 기존 파일 수정 → 통과",
       denied(run(EDIT, edit_payload(tmp, path=os.path.join(mem, "f1.md")))), False)
 
+# ── 관행 동결·예산 ────────────────────────────────────────────────
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
+plan_hash = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), prd], capture_output=True, text=True).stdout.strip()
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto")
+tr_ok = transcript(tmp, advisor_result=f"APPROVED plan#{plan_hash}", name="cm.jsonl")
+rules = os.path.join(tmp, "CLAUDE.md"); open(rules, "w").write("## Conventions\n- 하나\n")
+check("running 에서 CLAUDE.md 수정 → 차단(승인 증거가 있어도 동결이 우선)",
+      denied(run(EDIT, edit_payload(tmp, path=rules, content="- 둘\n", tr=tr_ok))), True)
+make_project(tmp, state="interview")
+check("interview 에서 CLAUDE.md 수정 → 통과", denied(run(EDIT, edit_payload(tmp, path=rules, content="- 둘\n"))), False)
+open(rules, "w").write("x\n" * 150)
+check("CLAUDE.md 줄 예산 초과 + 더 길게 쓰기 → 차단",
+      denied(run(EDIT, edit_payload(tmp, path=rules, content="x\n" * 151))), True)
+check("CLAUDE.md 줄 예산 초과 + Edit 로 한 줄 늘리기 → 차단",
+      denied(run(EDIT, {"tool_name": "Edit", "cwd": tmp, "transcript_path": "",
+                        "tool_input": {"file_path": rules, "old_string": "x", "new_string": "x\ny"}})), True)
+check("CLAUDE.md 줄 예산 초과 + 합치거나 지워서 줄이기 → 통과",
+      denied(run(EDIT, edit_payload(tmp, path=rules, content="x\n" * 20))), False)
+
 # ── Stop ──────────────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
 check("running + 남은 할 일 → 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)

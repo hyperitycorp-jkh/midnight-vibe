@@ -12,6 +12,7 @@ set -u
 MAX_FILES=2
 MAX_LINES=40
 MAX_MEMORY_FILES=12
+MAX_RULES_LINES=150
 
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
@@ -81,6 +82,37 @@ esac
 
 # The PRD itself is always writable. Blocking intake makes it impossible to start.
 case "$file_path" in */.claude/prd.md|.claude/prd.md) exit 0 ;; esac
+
+# ── Conventions: frozen while work is in flight, budgeted otherwise ──
+# The plan was approved against these rules. Editing the rule to make the work pass is the same
+# cheat as editing the plan after approval — and unlike judging compliance, this one is a file
+# check, so the hook can actually decide it.
+case "$file_path" in
+  */CLAUDE.md|CLAUDE.md)
+    case "$state" in
+      planned|running|review)
+        deny_json "[midnight] CLAUDE.md is frozen in the '$state' phase.
+
+The plan was approved against these conventions. If one of them is wrong, set state back to planned
+and write why under ## Decisions — don't edit the rule so the work passes." ;;
+    esac
+    # Over budget, only writes that GROW the file are denied — merging and deleting stay possible.
+    # (An empty jq result still counts as one line, so a "wrote nothing" check would never fire.)
+    grew=0
+    if [ -f "$file_path" ] && [ "$(wc -l < "$file_path" | tr -d ' ')" -ge "$MAX_RULES_LINES" ]; then
+      if [ "$tool" = "Write" ]; then
+        [ "$(( ${pending:-1} - 1 ))" -gt "$(wc -l < "$file_path" | tr -d ' ')" ] && grew=1
+      else
+        was=$(printf '%s' "$input" | jq -r '.tool_input | (.old_string // ([.edits[]?.old_string]|join("\n")) // "")' 2>/dev/null | wc -l | tr -d ' ')
+        [ "${pending:-0}" -gt "${was:-0}" ] && grew=1
+      fi
+    fi
+    if [ "$grew" = "1" ]; then
+      deny_json "[midnight] CLAUDE.md is over budget (${MAX_RULES_LINES} lines).
+
+Don't add another line. Merge it into the rule that already says this, or delete what stopped being true."
+    fi ;;
+esac
 
 # ── Per-phase decision ────────────────────────────────────────────
 if [ "$state" = "running" ]; then
