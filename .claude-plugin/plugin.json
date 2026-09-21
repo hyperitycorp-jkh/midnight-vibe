@@ -1,6 +1,6 @@
 {
   "name": "midnight-vibe",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A harness that cannot start without interviewing you and cannot finish without evidence. The phase lives in one .claude/prd.md and hooks guard its transitions.",
   "author": { "name": "Jeon Kwangha" },
   "keywords": ["harness", "hooks", "prd", "autonomous", "gates"]
