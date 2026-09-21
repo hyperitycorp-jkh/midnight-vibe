@@ -150,13 +150,31 @@ Say what you want in one line. Here's what happens next:
 
 If you get more than 5 questions, or questions without defaults, that's a bug. Please open an issue.
 
-### 3. Small edits stay small
+### 3. Bring it to a project you already have
+
+The plugin is installed once and applies everywhere, so the gates are already on. What an existing
+project needs is its own rules written down:
+
+```bash
+cd ~/code/your-project
+touch CLAUDE.md          # add a "## Conventions" section: the rules this project already lives by
+```
+
+The interview reads that first and **never asks what's in it**; the approval gate checks the plan
+against it. Write down only what the project actually follows — a rule nobody keeps turns into a
+rejection on your first plan.
+
+Mid-flight work is the one case to handle first. A project already deep in a change has no PRD, so
+every sizeable edit will be stopped. Either finish that work with the gates off
+(`mkdir -p .claude && touch .claude/harness.off`) or let the next change start from an interview.
+
+### 4. Small edits stay small
 
 Making someone write a PRD to fix a typo turns the harness into an obstacle.
 **Two files and 40 lines or fewer and the gates are invisible** — it just gets fixed and it just ends.
 The thresholds are `MAX_FILES` and `MAX_LINES` in `hooks/gate-edit.sh`.
 
-### 4. When it blocks you
+### 5. When it blocks you
 
 The block message says **what evidence is missing** — "seen doesn't match" means show the revised PRD
 again; "no APPROVED" means `advisor` was never called. Read that one line instead of working around it.
