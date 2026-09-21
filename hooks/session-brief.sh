@@ -12,7 +12,7 @@ out=""
 if [ -f "$prd" ]; then
   state=$(fm "$prd" state)
   left=$(awk '/^## Tasks[[:space:]]*$/{f=1;next} /^## /{f=0} f && /^[[:space:]]*-[[:space:]]*\[[[:space:]]\]/' "$prd" 2>/dev/null | wc -l | tr -d ' ')
-  out="midnight: work is in flight here via .claude/prd.md — state=${state}, ${left} task(s) left. Read that file first and continue under that phase's rules."
+  out="midnight: work is in flight here via .midnight/prd.md — state=${state}, ${left} task(s) left. Read that file first and continue under that phase's rules."
 fi
 mem="$HOME/.claude/projects/$(printf '%s' "$cwd" | sed 's|/|-|g')/memory"
 if [ -d "$mem" ]; then

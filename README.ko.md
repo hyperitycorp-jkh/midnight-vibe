@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-75%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-80%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
@@ -43,7 +43,7 @@ $ claude
 ⏺ Write(src/auth/session.ts)
   ⎿  [midnight] No PRD yet (state=none; 1 file, 64 lines — auto-pass is 2 files and 40 lines).
 
-     Create .claude/prd.md and go in this order.
+     Create .midnight/prd.md and go in this order.
       1) Put what must be asked under ## Open questions — five or fewer, each with a default
       2) Move the answers into ## Decisions and empty ## Open questions → state: planned
       3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
@@ -90,7 +90,7 @@ flowchart LR
 3번에 대한 유행하는 답 — `docs/` 밑에 PRD·ARCHITECTURE·RULES·DESIGN·TASKS·MEMORY 6종을 두는 방식 —
 은 따르지 않았다. 공식 근거가 없는 관행이고(2025년 Cline "Memory Bank" 의 재포장이다),
 컨텍스트를 상시 점유하면서 낡는 것을 아무도 책임지지 않는다.
-여기서는 **진행 중에만 `.claude/prd.md` 한 장**이 있고 끝나면 스스로 지워진다.
+여기서는 **진행 중에만 `.midnight/prd.md` 한 장**이 있고 끝나면 스스로 지워진다.
 
 ## 뭐가 다른가
 
@@ -141,10 +141,10 @@ flowchart LR
 
 | 무엇이 보이나 | 무엇을 하면 되나 |
 |---|---|
-| `.claude/prd.md` 한 장이 열리고 `## Open questions` 에 질문 5개 이하, 항목마다 기본값 | 답한다. 답하기 싫으면 "기본값대로" 한마디면 된다 |
+| `.midnight/prd.md` 한 장이 열리고 `## Open questions` 에 질문 5개 이하, 항목마다 기본값 | 답한다. 답하기 싫으면 "기본값대로" 한마디면 된다 |
 | 계획이 서고 `advisor` 가 승인한다 | **아무것도 안 해도 된다.** 반려돼도 알아서 고쳐 다시 올린다 |
 | 끝까지 돈다 — 막혀도 묻지 않는다 | 기다린다. 중간에 끼어들고 싶으면 그냥 말하면 된다 |
-| `advisor` 검수 → 완료 보고 | 받는다. `.claude/prd.md` 는 스스로 지워진다 |
+| `advisor` 검수 → 완료 보고 | 받는다. `.midnight/prd.md` 는 스스로 지워진다 |
 
 질문이 5개를 넘거나 기본값 없이 오면 그건 버그다. 이슈를 열어 달라.
 
@@ -162,7 +162,7 @@ touch CLAUDE.md          # "## Conventions" 절에, 이 프로젝트가 이미 �
 **실제로 지키는 것만 적어라** — 아무도 안 지키는 규칙은 첫 계획부터 반려로 돌아온다.
 
 먼저 처리할 건 진행 중인 작업 하나다. 한창 고치고 있는 프로젝트엔 PRD 가 없으니 큰 편집이 전부
-막힌다. 게이트를 끄고 그 일을 끝내거나(`mkdir -p .claude && touch .claude/harness.off`),
+막힌다. 게이트를 끄고 그 일을 끝내거나(`mkdir -p .midnight && touch .midnight/off`),
 다음 변경부터 인터뷰로 시작하면 된다.
 
 ### 4. 여러 개를 한꺼번에 말할 때
@@ -204,6 +204,13 @@ midnight-vibe/
 ├─ kits/               앱을 뚝딱 시작하는 출발점 + 복붙용 레시피
 └─ templates/prd.md    진행 중 단 하나의 파일
 ```
+
+## 왜 `.claude/` 가 아니라 `.midnight/` 인가
+
+Claude Code 는 `.claude/` 를 보호 디렉토리로 취급해서, 거기 쓰는 건 **매번** 승인을 묻는다 —
+편집 자동 수락이든, 우회 모드든, 허용 규칙을 걸든. PRD 가 그 안에 있으니 할 일 체크 하나하나가
+승인 창이 됐다. 그래서 상태는 `.midnight/` 에 둔다. PRD 를 히스토리에 남기기 싫으면 `.gitignore` 에
+넣으면 된다. 옛 버전이 `.claude/prd.md` 에 남긴 PRD 도 그대로 읽는다.
 
 ## 위조가 안 되는 이유
 
@@ -271,13 +278,13 @@ midnight-vibe/
 ## 안 만드는 것
 
 `docs/` 6종 세트(PRD·ARCHITECTURE·RULES·DESIGN·TASKS·MEMORY), `plans/` 디렉토리, 전역 규칙 파일,
-ralph-loop 의존. 파일은 진행 중 `.claude/prd.md` 한 장이고 끝나면 지운다.
+ralph-loop 의존. 파일은 진행 중 `.midnight/prd.md` 한 장이고 끝나면 지운다.
 자율 루프는 Stop 훅이 곧 루프라 사용자가 켤 일이 없다 — 트리거가 슬래시 명령이 아니라 `state` 값이다.
 
 ## 검증
 
 ```bash
-python3 hooks/tests/gates.test.py      # 게이트 단위 62건 — 위반·오차단 양방향
+python3 hooks/tests/gates.test.py      # 게이트 단위 67건 — 위반·오차단 양방향
 python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done 연쇄
 ```
 
@@ -310,7 +317,7 @@ diff 를 먼저 보여 준다.
 
 ```bash
 export CLAUDE_HARNESS_OFF=1   # 이번만
-touch .claude/harness.off     # 이 프로젝트에서 계속
+mkdir -p .midnight && touch .midnight/off     # 이 프로젝트에서 계속
 ```
 
 훅보다 먼저 있는 스위치다. 하네스가 일을 방해하면 끄는 게 맞다.

@@ -12,7 +12,7 @@ you're still in the interview phase.
    `flutterfire configure` generates `lib/firebase_options.dart`; for web, that `.env.example` must be
    copied to `.env.local` and filled in.
 4. Mention in one line that continuing work there means opening a session in that folder.
-5. **Don't build anything yet.** Ask what the app is and stand up `.claude/prd.md` first.
+5. **Don't build anything yet.** Ask what the app is and stand up `.midnight/prd.md` first.
 
 A kit is a starting point, not an answer. If the new app had to change the structure, leave one line on
 whether that was a good call — when it repeats, it belongs back in the kit.

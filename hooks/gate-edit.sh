@@ -36,7 +36,7 @@ if [ "$tool" = "AskUserQuestion" ]; then
       deny_json "[midnight] No questions to the user in the '$state' phase.
 
 If it's inside what the PRD already settled, decide it yourself. If you genuinely can't, ask the
-advisor subagent. If the premise itself turned out wrong, set state in .claude/prd.md back to
+advisor subagent. If the premise itself turned out wrong, set state in .midnight/prd.md back to
 'planned' (fix the plan) or 'prd' (re-agree) and write why under ## Decisions." ;;
   esac
   exit 0
@@ -72,12 +72,12 @@ require_jq
 # ── Intake: listening, not doing ──────────────────────────────────
 # "I'll say several things — hear them all, then do it at once." While the person is still talking,
 # nothing but the PRD may change, whatever the size: a two-line fix is exactly what gets done on
-# item 1 and then contradicts item 6. Each item goes into .claude/prd.md as it's heard, so the list
+# item 1 and then contradicts item 6. Each item goes into .midnight/prd.md as it's heard, so the list
 # survives compaction instead of living in the conversation.
 if [ "$state" = "intake" ]; then
   case "$file_path" in
-    */.claude/prd.md|.claude/prd.md) ;;
-    *) deny_json "[midnight] Still listening (state=intake) — nothing but .claude/prd.md changes yet.
+    */.midnight/prd.md|.midnight/prd.md|*/.claude/prd.md|.claude/prd.md) ;;
+    *) deny_json "[midnight] Still listening (state=intake) — nothing but .midnight/prd.md changes yet.
 
 Write what was just said under ## Intake as one numbered line, say you've got it, and wait for the
 next one. When they say they're done, group the items that belong together, turn them into the PRD,
@@ -95,7 +95,7 @@ case "$file_path" in
       prd_*|todo_*|task_*|plan_*|log_*)
         deny_json "[midnight] Work in flight doesn't belong in memory — '$base'.
 
-The PRD, the tasks and the running notes live in .claude/prd.md and disappear when the work is done.
+The PRD, the tasks and the running notes live in .midnight/prd.md and disappear when the work is done.
 Memory is for facts that will still be true in the next session." ;;
     esac
     dir=$(dirname "$file_path")
@@ -113,7 +113,7 @@ esac
 # the end ("the boxes were out of date, the hook is misjudging"). Boxes are ticked as work lands, or
 # they are not evidence of anything. Unticking is always fine.
 case "$file_path" in
-  */.claude/prd.md|.claude/prd.md)
+  */.midnight/prd.md|.midnight/prd.md|*/.claude/prd.md|.claude/prd.md)
     if [ "$tool" = "Write" ]; then
       was=$(grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]' "$file_path" 2>/dev/null)
       now=$(printf '%s' "$input" | jq -r '.tool_input.content // ""' 2>/dev/null | grep -c '^[[:space:]]*-[[:space:]]*\[[xX]\]')
@@ -204,7 +204,7 @@ fi
 
 deny_json "[midnight] No PRD yet (state=$state; ${nfiles} file(s), ${nlines} lines — auto-pass is ${MAX_FILES} files and ${MAX_LINES} lines).
 
-Create .claude/prd.md and go in this order.
+Create .midnight/prd.md and go in this order.
  1) Put what must be asked under ## Open questions — five or fewer, each with a default → set state: prd and show it to the user
  2) Move the answers into ## Decisions and empty ## Open questions → state: planned
  3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running

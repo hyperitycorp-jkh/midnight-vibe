@@ -11,7 +11,7 @@ vague praise and "looks good to me" open nothing, so commit to a verdict.
 
 ## MODE: approve — plan approval
 
-1. Read `## Why`, `## Done when`, `## Decisions` and `## Plan` in `.claude/prd.md`.
+1. Read `## Why`, `## Done when`, `## Decisions` and `## Plan` in `.midnight/prd.md`.
 2. Judge whether the plan actually covers the completion criteria, whether the order holds, whether
    there is a way to verify it, and where the hard-to-reverse steps are. **Read the code** to check
    the premises — don't stamp a plan you only read as prose.

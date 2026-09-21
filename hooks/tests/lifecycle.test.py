@@ -13,11 +13,11 @@ def sh(hook, payload):
     return subprocess.run([hook], input=json.dumps(payload), capture_output=True, text=True, errors="replace")
 
 def write_prd(tmp, state, plan="1. a\n2. b", approved="", undecided="", todo="- [ ] 하나\n- [ ] 둘", seen=""):
-    os.makedirs(os.path.join(tmp, ".claude"), exist_ok=True)
-    open(os.path.join(tmp, ".claude", "prd.md"), "w").write(
+    os.makedirs(os.path.join(tmp, ".midnight"), exist_ok=True)
+    open(os.path.join(tmp, ".midnight", "prd.md"), "w").write(
         f"---\nschema: 1\nstate: {state}\nseen: {seen}\napproved: {approved}\nloop: 0\n---\n"
         f"# 목표\n\n## Open questions\n{undecided}\n\n## Decisions\n- 정해짐\n\n## Plan\n{plan}\n\n## Tasks\n{todo}\n")
-    return os.path.join(tmp, ".claude", "prd.md")
+    return os.path.join(tmp, ".midnight", "prd.md")
 
 def hash_of(script, target):
     return subprocess.run([os.path.join(ROOT, "bin", script), target], capture_output=True, text=True).stdout.strip()
@@ -58,12 +58,12 @@ want("(나) PRD 없이 큰 편집은 막힌다", denied(edit(tmp, 60)), True)
 write_prd(tmp, "prd", undecided="- 물어볼 것 — 기본값: X")          # 모델이 PRD 를 쓴다
 if not blocked(stop(tmp)): handoffs += 1                              # ① 사용자에게 보인다
 sh(STAMP, {"cwd": tmp})                                               # 사용자가 답한다 → seen 찍힘
-seen = [l for l in open(os.path.join(tmp, ".claude/prd.md")) if l.startswith("seen:")][0].split(":")[1].strip()
+seen = [l for l in open(os.path.join(tmp, ".midnight/prd.md")) if l.startswith("seen:")][0].split(":")[1].strip()
 
 write_prd(tmp, "planned", seen=seen)                                  # 미정 비우고 계획 세움
 want("(나) planned 에서는 끝낼 수 없다(승인은 advisor 가 한다)", blocked(stop(tmp)), True)
 
-prd = os.path.join(tmp, ".claude/prd.md")
+prd = os.path.join(tmp, ".midnight/prd.md")
 plan = hash_of("prd-hash", prd)
 seen = hash_of("body-hash", prd)
 write_prd(tmp, "planned", approved=plan, seen=seen)

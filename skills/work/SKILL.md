@@ -9,7 +9,7 @@ Large edits are blocked until a PRD is agreed. Don't work around the block — f
 
 ## 0. When they say "I'll tell you several things"
 
-Don't start on the first one. Set `state: intake` in `.claude/prd.md` and **listen**.
+Don't start on the first one. Set `state: intake` in `.midnight/prd.md` and **listen**.
 
 - Each item goes under `## Intake` as one numbered line **the moment it's said** — not held in the
   conversation, where the next compaction loses it.
@@ -32,7 +32,7 @@ ones that don't match this project rather than dragging a stranger's design syst
 If this is a new app, check `${CLAUDE_PLUGIN_ROOT}/kits/` for a starting point (`/midnight-vibe:new`).
 If one fits, start there and don't re-decide the structure.
 
-## 2. Write `.claude/prd.md`
+## 2. Write `.midnight/prd.md`
 
 Copy `templates/prd.md`. Put **only what genuinely must be asked** under `## Open questions` —
 five or fewer, each with a default. A question without a default isn't a question, it's a hand-off.
@@ -67,7 +67,7 @@ If a premise turns out to be wrong, set `state` back to `planned`, fix the plan 
 ## 6. Finishing
 
 Send it to `advisor` with `MODE: review`. Once it passes, move only facts that will still be true
-next session into memory (never the work in flight — the hooks block that), and delete `.claude/prd.md`.
+next session into memory (never the work in flight — the hooks block that), and delete `.midnight/prd.md`.
 If a new practice hardened along the way, add one line under `## Conventions` in **this project's
 `CLAUDE.md`** — never inside the plugin directory, which is a version-scoped cache that the next
 install orphans. If the same line turns up in a second project, it has earned its way into the

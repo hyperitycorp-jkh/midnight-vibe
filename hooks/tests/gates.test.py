@@ -35,9 +35,9 @@ def h8(s):
     return hashlib.sha256(s.encode()).hexdigest()[:8]
 
 def make_project(tmp, state="interview", plan="1. 하나", approved="", undecided="", todo="- [ ] 남음", seen=None, loop=0):
-    os.makedirs(os.path.join(tmp, ".claude"), exist_ok=True)
+    os.makedirs(os.path.join(tmp, ".midnight"), exist_ok=True)
     body = PRD.format(state=state, seen="", approved=approved, loop=loop, undecided=undecided, plan=plan, todo=todo)
-    path = os.path.join(tmp, ".claude", "prd.md")
+    path = os.path.join(tmp, ".midnight", "prd.md")
     open(path, "w").write(body)
     if seen == "auto":  # 본문 해시는 훅과 같은 코드로 계산한다 — 파이썬으로 다시 구현하면 둘이 갈린다
         seen = subprocess.run([os.path.join(ROOT, "bin", "body-hash"), path], capture_output=True, text=True).stdout.strip()
@@ -89,7 +89,7 @@ def edit_payload(tmp, path=None, content="x\n", tool="Write", tr=None):
 tmp = tempfile.mkdtemp(); make_project(tmp)
 check("PRD 없음 + 작은 편집(1파일 3줄) → 통과", denied(run(EDIT, edit_payload(tmp, content="a\nb\nc"))), False)
 check("PRD 없음 + 큰 편집(60줄) → 차단", denied(run(EDIT, edit_payload(tmp, content="x\n" * 60))), True)
-check("PRD 파일 자체 쓰기는 언제나 통과", denied(run(EDIT, edit_payload(tmp, path=os.path.join(tmp, ".claude/prd.md"), content="x\n" * 60))), False)
+check("PRD 파일 자체 쓰기는 언제나 통과", denied(run(EDIT, edit_payload(tmp, path=os.path.join(tmp, ".midnight/prd.md"), content="x\n" * 60))), False)
 
 # ── 승인 증거 ─────────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
@@ -258,10 +258,20 @@ check("intake 에서 읽기 명령 → 통과",
 check("intake 에서 되묻기 → 통과", denied(run(EDIT, {"tool_name": "AskUserQuestion", "cwd": tmp, "tool_input": {}})), False)
 check("intake 에서 멈추기 → 허용(매번 사용자 차례)", blocked(run(STOP, {"cwd": tmp})), False)
 
+# ── 옛 위치(.claude/prd.md) 에서 도는 작업은 이사 전에도 깨지지 않는다 ──
+tmp = tempfile.mkdtemp(); os.makedirs(os.path.join(tmp, ".claude"))
+open(os.path.join(tmp, ".claude", "prd.md"), "w").write("---\nstate: running\nloop: 0\n---\n# x\n\n## Tasks\n- [ ] 남음\n")
+check("옛 위치의 PRD 도 읽는다 — 남은 할 일이면 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)
+os.makedirs(os.path.join(tmp, ".midnight")); open(os.path.join(tmp, ".midnight", "prd.md"), "w").write("---\nstate: interview\n---\n")
+check("새 위치가 있으면 새 위치가 이긴다", blocked(run(STOP, {"cwd": tmp})), False)
+open(os.path.join(tmp, ".claude", "harness.off"), "w").write("")
+check("옛 스위치(.claude/harness.off)도 여전히 끈다",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60))), False)
+
 # ── Stop ──────────────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
 check("running + 남은 할 일 → 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)
-loop_now = [l for l in open(os.path.join(tmp, ".claude/prd.md")) if l.startswith("loop:")][0]
+loop_now = [l for l in open(os.path.join(tmp, ".midnight/prd.md")) if l.startswith("loop:")][0]
 check("차단할 때 loop 카운터 증가", loop_now.strip() == "loop: 1", True)
 make_project(tmp, state="running", todo="- [x] 끝")
 check("running + 할 일 전부 완료 → 검수로 가라(역시 끝내지 못함)", blocked(run(STOP, {"cwd": tmp})), True)
@@ -287,8 +297,8 @@ tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음"
 check("CLAUDE_HARNESS_OFF=1 → Stop 전면 통과", blocked(run(STOP, {"cwd": tmp}, env={"CLAUDE_HARNESS_OFF": "1"})), False)
 check("CLAUDE_HARNESS_OFF=1 → 편집 전면 통과",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60), env={"CLAUDE_HARNESS_OFF": "1"})), False)
-open(os.path.join(tmp, ".claude", "harness.off"), "w").write("")
-check(".claude/harness.off → 전면 통과", blocked(run(STOP, {"cwd": tmp})), False)
+os.makedirs(os.path.join(tmp, ".midnight"), exist_ok=True); open(os.path.join(tmp, ".midnight", "off"), "w").write("")
+check(".midnight/off → 전면 통과", blocked(run(STOP, {"cwd": tmp})), False)
 
 # ── stamp-prompt ──────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="prd")

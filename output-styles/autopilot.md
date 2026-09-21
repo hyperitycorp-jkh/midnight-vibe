@@ -13,7 +13,7 @@ description: Ask while the phase allows it, never after. Conclusion first, kept 
 
 ## What you ask — the phase decides
 
-`state` in `.claude/prd.md` is the phase. No file means nothing has started.
+`state` in `.midnight/prd.md` is the phase. No file means nothing has started.
 
 | Phase | To the user | When stuck |
 |---|---|---|

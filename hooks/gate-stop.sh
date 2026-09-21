@@ -32,7 +32,7 @@ bump_loop() {
 }
 
 if [ "$loop" -ge "$LOOP_CAP" ]; then
-  printf '{"systemMessage":%s}\n' "$(printf '[midnight] Hit the loop ceiling of %s, releasing the gate (state=%s). The scope may have been mis-measured — read .claude/prd.md and judge for yourself. If the harness got this wrong rather than the plan, /midnight-vibe:report sends the fix back to it.' "$LOOP_CAP" "$state" | jq -Rs .)"
+  printf '{"systemMessage":%s}\n' "$(printf '[midnight] Hit the loop ceiling of %s, releasing the gate (state=%s). The scope may have been mis-measured — read .midnight/prd.md and judge for yourself. If the harness got this wrong rather than the plan, /midnight-vibe:report sends the fix back to it.' "$LOOP_CAP" "$state" | jq -Rs .)"
   exit 0
 fi
 
@@ -60,7 +60,7 @@ Keep going. If you're stuck, ask the advisor — not the user. If the premise tu
     tree=$("$MV_ROOT/bin/tree-hash" "$cwd")
     if advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "REVIEWED ok tree#${tree}"; then
       bump_loop
-      block_stop "[midnight] Review passed (tree#${tree}). Wrap up — move anything worth keeping into memory, delete .claude/prd.md, then write the final report."
+      block_stop "[midnight] Review passed (tree#${tree}). Wrap up — move anything worth keeping into memory, delete .midnight/prd.md, then write the final report."
     fi
     bump_loop
     if advisor_ran_in_background "$(printf '%s' "$input" | jq -r '.transcript_path // empty')"; then

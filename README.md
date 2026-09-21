@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-75%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-80%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
@@ -43,7 +43,7 @@ $ claude
 ⏺ Write(src/auth/session.ts)
   ⎿  [midnight] No PRD yet (state=none; 1 file, 64 lines — auto-pass is 2 files and 40 lines).
 
-     Create .claude/prd.md and go in this order.
+     Create .midnight/prd.md and go in this order.
       1) Put what must be asked under ## Open questions — five or fewer, each with a default
       2) Move the answers into ## Decisions and empty ## Open questions → state: planned
       3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
@@ -91,7 +91,7 @@ That boundary is a single PRD, and this repo enforces it with hooks.
 The popular answer to (3) — a `docs/` folder holding PRD, ARCHITECTURE, RULES, DESIGN, TASKS and MEMORY —
 is not used here. It has no official basis (it's a repackaging of Cline's 2025 "Memory Bank"),
 it occupies context permanently, and nobody owns keeping it true.
-Here there is **one `.claude/prd.md` while work is in flight**, and it deletes itself when done.
+Here there is **one `.midnight/prd.md` while work is in flight**, and it deletes itself when done.
 
 ## What's different
 
@@ -144,10 +144,10 @@ Say what you want in one line. Here's what happens next:
 
 | What you see | What you do |
 |---|---|
-| `.claude/prd.md` opens with ≤5 questions under `## Open questions`, each with a default | Answer. Or just say "use the defaults" |
+| `.midnight/prd.md` opens with ≤5 questions under `## Open questions`, each with a default | Answer. Or just say "use the defaults" |
 | A plan is written and `advisor` approves it | **Nothing.** If rejected, it fixes and resubmits on its own |
 | It runs to the end — it won't ask, even when stuck | Wait. Interrupt any time by just talking |
-| `advisor` reviews → final report | Read it. `.claude/prd.md` deletes itself |
+| `advisor` reviews → final report | Read it. `.midnight/prd.md` deletes itself |
 
 If you get more than 5 questions, or questions without defaults, that's a bug. Please open an issue.
 
@@ -167,7 +167,7 @@ rejection on your first plan.
 
 Mid-flight work is the one case to handle first. A project already deep in a change has no PRD, so
 every sizeable edit will be stopped. Either finish that work with the gates off
-(`mkdir -p .claude && touch .claude/harness.off`) or let the next change start from an interview.
+(`mkdir -p .midnight && touch .midnight/off`) or let the next change start from an interview.
 
 ### 4. Telling it several things at once
 
@@ -209,6 +209,13 @@ midnight-vibe/
 ├─ kits/               starting points for new apps, plus copy-paste recipes
 └─ templates/prd.md    the only file that exists while work is in flight
 ```
+
+## Why `.midnight/` and not `.claude/`
+
+Claude Code treats `.claude/` as a protected directory and asks for approval on every write there —
+in accept-edits mode, in bypass mode, and regardless of allow rules. A PRD inside it made every task
+tick a prompt. The harness keeps its state in `.midnight/` instead; add it to `.gitignore` if you
+don't want the PRD in history. A PRD left at `.claude/prd.md` by an older version is still read.
 
 ## Why it can't be forged
 
@@ -286,7 +293,7 @@ it's triggered by a `state` value, not a slash command.
 ## Verify
 
 ```bash
-python3 hooks/tests/gates.test.py      # 62 gate cases — both violations and false blocks
+python3 hooks/tests/gates.test.py      # 67 gate cases — both violations and false blocks
 python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
 ```
 
@@ -319,7 +326,7 @@ A gate that worked as designed and merely got in your way isn't a bug — that's
 
 ```bash
 export CLAUDE_HARNESS_OFF=1   # this once
-touch .claude/harness.off     # for this project
+mkdir -p .midnight && touch .midnight/off     # for this project
 ```
 
 A switch that sits in front of the hooks. If the harness is in your way, turning it off is the right call.

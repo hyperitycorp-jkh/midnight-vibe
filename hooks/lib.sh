@@ -1,17 +1,29 @@
 #!/bin/bash
 # Shared by the midnight-vibe hooks. The phase lives only in the frontmatter of
-# `.claude/prd.md` — never inferred from conversation, which vanishes at compaction.
+# `.midnight/prd.md` — never inferred from conversation, which vanishes at compaction.
 
 MV_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # A switch that sits in front of the hooks. A broken harness must never stop someone working.
 mv_off() {
   [ "${CLAUDE_HARNESS_OFF:-}" = "1" ] && return 0
-  [ -e "${1:-.}/.claude/harness.off" ] && return 0
+  [ -e "${1:-.}/.midnight/off" ] && return 0
+  [ -e "${1:-.}/.claude/harness.off" ] && return 0   # where the switch lived before 0.4
   return 1
 }
 
-mv_prd() { printf '%s/.claude/prd.md' "${1:-.}"; }
+# The state lives in .midnight/, not .claude/. Claude Code treats .claude/ as a protected directory
+# and asks for approval on every write there — in accept-edits mode, in bypass mode, and whatever
+# allow rule you add — so a PRD inside it turned every task tick into a prompt. A PRD already in
+# flight at .claude/prd.md is still read, so work started before the move doesn't break.
+mv_prd() {
+  local d="${1:-.}"
+  if [ -f "$d/.midnight/prd.md" ] || [ ! -f "$d/.claude/prd.md" ]; then
+    printf '%s/.midnight/prd.md' "$d"
+  else
+    printf '%s/.claude/prd.md' "$d"
+  fi
+}
 
 # Read one frontmatter line. Only the first `---` block counts.
 fm() {

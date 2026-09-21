@@ -5,7 +5,7 @@ description: The harness got it wrong — send the fix back to it
 Something about midnight-vibe misfired: a gate blocked work it shouldn't have, a message was wrong or
 unclear, or the loop ceiling released. Carry that back to the harness instead of working around it.
 
-1. **Gather the evidence.** The exact block message, the `state` and frontmatter of `.claude/prd.md`,
+1. **Gather the evidence.** The exact block message, the `state` and frontmatter of `.midnight/prd.md`,
    what the person was trying to do, and the output of `/midnight-vibe:doctor`. Reduce it to the
    smallest case that still misfires — a bad report is one that cannot be reproduced.
 2. **Decide which one this is.**
