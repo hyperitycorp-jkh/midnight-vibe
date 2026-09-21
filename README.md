@@ -230,7 +230,9 @@ Stale recipes are not deleted.
 
 ## What grows
 
-`conventions/` holds long-standing practices, one file each. The interview reads these first,
+`conventions/` holds long-standing practices, one file each — the stack ones, the design system,
+and the working rules (for example: anything that varies by kind becomes an enum and an exhaustive
+lookup, never a prose string a new case can slip past). The interview reads these first,
 and **what's written there is never asked again.** When a new practice hardens, add a line.
 That's where the harness grows.
 
