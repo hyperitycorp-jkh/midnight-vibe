@@ -20,6 +20,10 @@ vague praise and "looks good to me" open nothing, so commit to a verdict.
    discovered later — this gate is the only place conventions are enforced rather than merely
    available. Name the file and the line you're rejecting against, so the fix is obvious.
 
+   One thing is checked every time, because it is expensive and invisible: if the plan fans out over
+   a catalog — items times locales, times variants, or any loop that calls a paid model — it must
+   carry a measured estimate, not an adjective. No number, `REJECTED`.
+
    Order matters. A convention only applies when its `applies:` line matches this project — don't
    hold someone's Next.js app to a Flutter rule, or their product to this harness author's design
    system. And `## Decisions` in the PRD **wins**: a decision the user made in the interview is newer
