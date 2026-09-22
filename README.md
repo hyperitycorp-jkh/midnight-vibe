@@ -229,6 +229,17 @@ is re-checked on every action.
 - `seen:` (the hash of the PRD you saw) is stamped only by the `UserPromptSubmit` hook —
   a user message is the one event a model cannot manufacture.
 
+## The advisor's model
+
+Approval and review run on a subagent, and `agents/advisor.md` sets its `model:` to the most capable
+one available — deliberately a *different* model than the session doing the work, since a reviewer
+sharing the executor's blind spots is not a second opinion. Its cost is small: two calls per task,
+reading the plan and the code rather than the conversation.
+
+**If your account has no access to that model, change that one line** (`opus` works). An advisor that
+cannot run means approval and review never arrive, and both gates stay shut with no obvious reason.
+`/midnight-vibe:doctor` checks this by actually calling it.
+
 ## Gates and their limits
 
 | Gate | What the hook stops | What it **can't** |
