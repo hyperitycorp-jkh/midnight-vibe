@@ -268,6 +268,33 @@ open(os.path.join(tmp, ".claude", "harness.off"), "w").write("")
 check("옛 스위치(.claude/harness.off)도 여전히 끈다",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60))), False)
 
+# ── 0.5 점검에서 재현한 넷 ────────────────────────────────────────
+def bash(tmp, cmd): return run(EDIT, {"tool_name": "Bash", "cwd": tmp, "tool_input": {"command": cmd}})
+tmp = tempfile.mkdtemp(); make_project(tmp, state="interview")
+check("PRD 전 Bash 히어독 300줄 → 차단(예전엔 0줄로 세서 통과)",
+      denied(bash(tmp, "cat > src/big.ts <<EOF\n" + "export const x = 1\n" * 300 + "EOF")), True)
+check("PRD 전 Bash 로 한 줄 쓰기 → 통과", denied(bash(tmp, "echo 1 > note.txt")), False)
+make_project(tmp, state="intake")
+check("intake 에서 Bash 로 PRD 에 한 줄 추가 → 통과(예전엔 막혀서 받아적지를 못함)",
+      denied(bash(tmp, 'echo "1. 제목이 계속 오늘" >> .midnight/prd.md')), False)
+check("intake 에서 Bash 로 소스 쓰기 → 여전히 차단", denied(bash(tmp, "echo x > src/a.ts")), True)
+make_project(tmp, state="running")
+p = bash(tmp, "sed -i '' 's/- \\[ \\]/- [x]/g' .midnight/prd.md")
+check("running 에서 sed 로 PRD 체크 몰아 칠하기 → 차단(두 개 제한을 셸로 우회)", denied(p), True)
+check("그 메시지가 Edit 로 하라고 알려준다", "Edit" in p.stdout, True)
+
+# 검수 통과가 훅 자신의 loop 증가 때문에 스스로 무효가 되던 것
+tmp = tempfile.mkdtemp()
+subprocess.run(["git", "init", "-q"], cwd=tmp); subprocess.run(["git", "commit", "-q", "--allow-empty", "-m", "i"], cwd=tmp,
+               env={**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"})
+make_project(tmp, state="review", todo="- [x] 끝")
+tree = subprocess.run([os.path.join(ROOT, "bin", "tree-hash"), tmp], capture_output=True, text=True).stdout.strip()
+# 트랜스크립트를 저장소 안에 두면 그 자체가 미추적 파일이라 해시를 바꾼다 — 밖에 둔다
+tr = transcript(tempfile.mkdtemp(), advisor_result=f"REVIEWED ok tree#{tree}", name="rv.jsonl")
+run(STOP, {"cwd": tmp, "transcript_path": tr})           # 통과 → 훅이 loop 를 올린다
+p2 = run(STOP, {"cwd": tmp, "transcript_path": tr})      # 같은 증거로 다시
+check("검수 통과가 loop 증가 뒤에도 유효하다(PRD 는 트리 해시에서 빠진다)", "Review passed" in p2.stdout, True)
+
 # ── Stop ──────────────────────────────────────────────────────────
 tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="- [ ] 남음")
 check("running + 남은 할 일 → 끝내지 못함", blocked(run(STOP, {"cwd": tmp})), True)

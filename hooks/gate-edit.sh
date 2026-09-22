@@ -63,6 +63,24 @@ if [ "$tool" = "Bash" ]; then
     *) exit 0 ;;
   esac
   file_path="(bash)"
+  # A heredoc is a write of however many lines it carries. Counting it as zero let a 300-line
+  # `cat > src/x.ts <<EOF` walk straight past the pre-PRD size gate.
+  pending=$(printf '%s' "$cmd" | wc -l | tr -d ' ')
+  # A shell write that touches the PRD is a PRD write. Before work runs that's intake and drafting,
+  # and blocking it blocked the job itself. While work runs, though, a shell edit is invisible to the
+  # tick limit — one `sed -i` can paint every box — so there it must go through Edit or Write.
+  case "$cmd" in
+    *.midnight/prd.md*|*.claude/prd.md*)
+      case "$state" in
+        running|review)
+          require_jq
+          deny_json "[midnight] Edit the PRD with the Edit or Write tool while work is running, not from the shell.
+
+A shell edit is invisible to the limit on ticking task boxes — one sed can check them all. Tick each
+one as its task lands, with Edit." ;;
+        *) file_path="$(mv_prd "$cwd")" ;;
+      esac ;;
+  esac
 else
   pending=$(printf '%s' "$input" | jq -r '.tool_input | (.new_string // .content // ([.edits[]?.new_string]|join("\n")) // "")' 2>/dev/null | wc -l | tr -d ' ')
 fi

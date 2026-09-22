@@ -5,9 +5,12 @@
 set -u
 cd "${1:-.}" 2>/dev/null || exit 0
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { printf 'nogit'; exit 0; }
+# The harness's own state is not the work being reviewed. Leaving it in made a review pass void
+# itself: the Stop hook bumps `loop:` in the PRD, the hash moves, and the pass stops matching.
+EXCLUDE=(':(exclude).midnight' ':(exclude).claude/prd.md')
 {
-  git diff HEAD 2>/dev/null
-  git ls-files --others --exclude-standard -z 2>/dev/null | while IFS= read -r -d '' f; do
+  git diff HEAD -- . "${EXCLUDE[@]}" 2>/dev/null
+  git ls-files --others --exclude-standard -z -- . "${EXCLUDE[@]}" 2>/dev/null | while IFS= read -r -d '' f; do
     printf '=== %s\n' "$f"; cat "$f" 2>/dev/null
   done
 } | shasum -a 256 2>/dev/null | cut -c1-8

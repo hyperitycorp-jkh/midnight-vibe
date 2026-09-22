@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-80%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-87%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.ko.md"><img alt="Korean" src="https://img.shields.io/badge/lang-한국어-lightgrey"></a>
 </p>
@@ -233,7 +233,7 @@ is re-checked on every action.
 
 | Gate | What the hook stops | What it **can't** |
 |---|---|---|
-| PRD agreed | Big edits before a PRD (default: >2 files / >40 lines) | Question quality; Bash heredoc workarounds (pattern heuristics) |
+| PRD agreed | Big edits before a PRD (default: >2 files / >40 lines), heredocs counted by their lines | Question quality; a single shell command that writes the PRD *and* other files (pattern heuristics) |
 | Plan approved | Editing in the run phase without approval evidence | The advisor's judgment; a thin plan written to be easy to approve |
 | Review passed | Finishing with tasks left, or with no evidence | Summarizing the review honestly |
 | No questions leak | `AskUserQuestion` during the run phase | Question marks in prose — harmless, since the turn can't end |
@@ -293,7 +293,7 @@ it's triggered by a `state` value, not a slash command.
 ## Verify
 
 ```bash
-python3 hooks/tests/gates.test.py      # 67 gate cases — both violations and false blocks
+python3 hooks/tests/gates.test.py      # 74 gate cases — both violations and false blocks
 python3 hooks/tests/lifecycle.test.py  # 13 cases across one full interview→done cycle
 ```
 
