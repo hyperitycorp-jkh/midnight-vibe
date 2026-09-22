@@ -78,7 +78,18 @@ if [ "$tool" = "Bash" ]; then
 
 A shell edit is invisible to the limit on ticking task boxes — one sed can check them all. Tick each
 one as its task lands, with Edit." ;;
-        *) file_path="$(mv_prd "$cwd")" ;;
+        *)
+          # Only when the PRD is the *whole* write. Strip the writes that target it and see whether
+          # anything else is still being written — `>> .midnight/prd.md && cat > src/a.ts <<EOF`
+          # used to pass as a PRD write because the PRD was mentioned anywhere in it.
+          rest=$(printf '%s' "$probe" | sed -E \
+            -e 's#[0-9]*>>?[[:space:]]*[^[:space:];|&]*\.(midnight|claude)/prd\.md##g' \
+            -e 's#tee([[:space:]]+-a)?[[:space:]]+[^[:space:];|&]*\.(midnight|claude)/prd\.md##g' \
+            -e 's#sed[[:space:]]+-i[^;|&]*\.(midnight|claude)/prd\.md##g')
+          case "$rest" in
+            *">"*|*"tee "*|*"sed -i"*|*"cp "*|*"mv "*|*"install "*|*"python3 -"*|*"npx "*) ;;
+            *) file_path="$(mv_prd "$cwd")" ;;
+          esac ;;
       esac ;;
   esac
 else

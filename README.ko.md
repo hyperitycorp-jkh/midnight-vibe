@@ -7,7 +7,7 @@
 
 <p align="center">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-black">
-  <img alt="tests" src="https://img.shields.io/badge/tests-87%20passing-brightgreen">
+  <img alt="tests" src="https://img.shields.io/badge/tests-89%20passing-brightgreen">
   <img alt="plugin" src="https://img.shields.io/badge/claude%20code-plugin-8b5cf6">
   <a href="README.md"><img alt="English" src="https://img.shields.io/badge/lang-English-lightgrey"></a>
 </p>
@@ -228,7 +228,7 @@ Claude Code 는 `.claude/` 를 보호 디렉토리로 취급해서, 거기 쓰�
 
 | 게이트 | 훅이 막는 것 | 훅이 **못** 막는 것 |
 |---|---|---|
-| PRD 합의 | PRD 전의 큰 편집(기본 2파일·40줄 초과), 히어독은 줄 수대로 센다 | 질문의 질, PRD 와 다른 파일을 한 셸 명령으로 같이 쓰는 경우(패턴 휴리스틱) |
+| PRD 합의 | PRD 전의 큰 편집(기본 2파일·40줄 초과), 히어독은 줄 수대로, PRD 와 다른 파일을 섞어 쓰는 셸 명령 | 질문의 질, 셸 쓰기는 패턴으로 보므로 희한하게 쓴 리다이렉션은 빠져나간다 |
 | 계획 승인 | 승인 증거 없는 실행 국면 편집 | advisor 의 판단 품질, 승인받기 쉬운 얄팍한 계획 |
 | 검수 통과 | 할 일이 남은 채 끝내기, 증거 없는 종료 | 검수 결과를 정직하게 요약하는 것 |
 | 질문 누출 | 실행 국면의 `AskUserQuestion` | 답변 본문의 물음표 — 턴이 안 끝나므로 무해 |
@@ -284,7 +284,7 @@ ralph-loop 의존. 파일은 진행 중 `.midnight/prd.md` 한 장이고 끝나�
 ## 검증
 
 ```bash
-python3 hooks/tests/gates.test.py      # 게이트 단위 74건 — 위반·오차단 양방향
+python3 hooks/tests/gates.test.py      # 게이트 단위 76건 — 위반·오차단 양방향
 python3 hooks/tests/lifecycle.test.py  # 한 바퀴 13건 — interview→done 연쇄
 ```
 

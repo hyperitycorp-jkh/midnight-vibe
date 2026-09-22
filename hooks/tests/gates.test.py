@@ -278,6 +278,10 @@ make_project(tmp, state="intake")
 check("intake 에서 Bash 로 PRD 에 한 줄 추가 → 통과(예전엔 막혀서 받아적지를 못함)",
       denied(bash(tmp, 'echo "1. 제목이 계속 오늘" >> .midnight/prd.md')), False)
 check("intake 에서 Bash 로 소스 쓰기 → 여전히 차단", denied(bash(tmp, "echo x > src/a.ts")), True)
+check("intake 에서 PRD 와 소스를 한 명령으로 같이 쓰기 → 차단(PRD 를 끼워 넣어 통과하던 구멍)",
+      denied(bash(tmp, 'echo "1." >> .midnight/prd.md && cat > src/a.ts <<EOF\nx\nEOF')), True)
+check("intake 에서 PRD 두 번 쓰기 → 통과",
+      denied(bash(tmp, 'echo "1." >> .midnight/prd.md; echo "2." >> .midnight/prd.md')), False)
 make_project(tmp, state="running")
 p = bash(tmp, "sed -i '' 's/- \\[ \\]/- [x]/g' .midnight/prd.md")
 check("running 에서 sed 로 PRD 체크 몰아 칠하기 → 차단(두 개 제한을 셸로 우회)", denied(p), True)
