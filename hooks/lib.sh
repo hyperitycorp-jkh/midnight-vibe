@@ -108,6 +108,16 @@ body_hash() {
     | sed 's/[[:space:]]*$//' | shasum -a 256 2>/dev/null | cut -c1-8
 }
 
+# The 0.2.x hash (whole body, frontmatter excluded). A PRD stamped before the upgrade carries
+# this value in `seen`; without it, installing a new version silently invalidates every PRD in
+# flight and the running session is thrown back to the user with nothing changed.
+body_hash_legacy() {
+  local file="$1"
+  [ -f "$file" ] || return 0
+  awk 'NR==1 && $0=="---"{inb=1;next} inb && $0=="---"{inb=0;next} !inb' "$file" \
+    | sed 's/[[:space:]]*$//' | shasum -a 256 2>/dev/null | cut -c1-8
+}
+
 # Files touched and lines changed in THIS request. Counting per session would block the
 # next typo fix just because the previous request was large — the window starts at the
 # last user instruction.

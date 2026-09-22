@@ -204,7 +204,8 @@ if [ "$state" = "running" ]; then
 "
   [ -n "$plan" ] || missing="${missing}· ## Plan is empty.
 "
-  [ "$seen" = "$body" ] || missing="${missing}· The PRD the user saw (seen=${seen:-none}) differs from the current one (${body}) — show the revised PRD and get a reply.
+  # A `seen` stamped by the pre-0.3 hash still counts while the whole body is unchanged.
+  [ "$seen" = "$body" ] || [ "$seen" = "$(body_hash_legacy "$prd")" ] || missing="${missing}· The PRD the user saw (seen=${seen:-none}) differs from the current one (${body}) — show the revised PRD and get a reply.
 "
   if [ -n "$plan" ] && [ "$approved" != "$plan" ]; then
     missing="${missing}· The approved plan (approved=${approved:-none}) differs from the current one (${plan}) — the plan changed, so get it approved again.
