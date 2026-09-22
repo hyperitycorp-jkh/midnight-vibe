@@ -167,6 +167,20 @@ check("답을 Decisions·Plan 으로 옮긴 뒤에도 seen 유지 → 통과",
 open(p_seen, "w").write(open(p_seen).read().replace("# 목표", "# 바뀐 목표"))
 check("사용자가 본 목표가 바뀌면 → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_p2))), True)
+# 업그레이드 직후: 0.2.x 가 본문 전체 해시로 찍은 seen 은 본문이 그대로면 계속 유효해야 한다.
+# 그렇지 않으면 플러그인을 올리는 순간 진행 중인 모든 PRD 가 사용자에게 되돌아간다.
+p_leg = make_project(tmp, state="running", plan="1. 하나", approved=plan_hash)
+# 해시는 훅과 같은 코드로 계산한다 — 파이썬으로 다시 구현하면 둘이 갈린다.
+legacy = subprocess.run(["bash", "-c", f'source "{ROOT}/hooks/lib.sh"; body_hash_legacy "$1"', "_", p_leg],
+                        capture_output=True, text=True).stdout.strip()
+assert legacy and legacy != subprocess.run([os.path.join(ROOT, "bin", "body-hash"), p_leg],
+                                           capture_output=True, text=True).stdout.strip()
+make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen=legacy)
+check("업그레이드 전 방식으로 찍힌 seen + 본문 그대로 → 통과",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), False)
+open(p_leg, "w").write(open(p_leg).read().replace("# 목표", "# 바뀐 목표"))
+check("업그레이드 전 seen 이어도 본문이 바뀌면 → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)
 make_project(tmp, state="running", plan="1. 하나", approved=plan_hash, seen="auto", undecided="- 못 정한 것")
 check("running + ## Open questions 남음 → 차단",
       denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_ok))), True)

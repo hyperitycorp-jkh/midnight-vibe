@@ -1,6 +1,6 @@
 {
   "name": "midnight-vibe",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A harness that cannot start without interviewing you and cannot finish without evidence. The phase lives in one .midnight/prd.md and hooks guard its transitions.",
   "author": {
     "name": "Jeon Kwangha"
