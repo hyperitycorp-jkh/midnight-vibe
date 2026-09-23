@@ -75,7 +75,9 @@ If a premise turns out to be wrong, set `state` back to `planned`, fix the plan 
 
 ## 6. Finishing
 
-Send it to `advisor` with `MODE: review`. Once it passes, move only facts that will still be true
+Send it to `advisor` with `MODE: review`. **Land the work before you call it done** — merged, the
+issue closed by the change that closed it, the branch and worktree gone, nothing temporary left in
+the tree. Whatever cannot land yet goes in the final report with its reason. Once it passes, move only facts that will still be true
 next session into memory (never the work in flight — the hooks block that), and delete `.midnight/prd.md`.
 If a new practice hardened along the way, add one line under `## Conventions` in **this project's
 `CLAUDE.md`** — never inside the plugin directory, which is a version-scoped cache that the next

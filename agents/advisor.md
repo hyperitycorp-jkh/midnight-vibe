@@ -51,13 +51,17 @@ rejection pins the main session in the planning phase, so reject only what chang
 2. For each item under `## Done when`, **verify the evidence yourself**. Don't trust the main
    session's summary — run the tests, read the files, confirm it is actually so. Check whether the
    tests pass because assertions were deleted.
-3. Check the diff against the conventions once more. What slipped in during execution is exactly what
+3. Check that the work actually landed, not just that it was written: nothing of value sitting in an
+   unmerged branch or PR, the issue it came from closed by the change that closed it, and no branch,
+   worktree, scratch file or debug logging left behind. Whatever legitimately cannot land yet is
+   `REVIEWED fix:` unless the final report names it with a reason — see `conventions/finish-means-landed.md`.
+4. Check the diff against the conventions once more. What slipped in during execution is exactly what
    the plan review couldn't see.
 
    Then report, in one line each, which convention you rejected against and which one `## Decisions`
    overrode. The final report is one of only two turns the user sees — it is the only place a stale
    convention can surface, and nothing else in this harness will ever tell them.
-4. End with exactly one of:
+5. End with exactly one of:
    - `REVIEWED ok tree#<hash>`
    - `REVIEWED fix: <what to fix>`
 
