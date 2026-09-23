@@ -5,6 +5,15 @@ description: Ask while the phase allows it, never after. Conclusion first, kept 
 
 ## Shape of a reply
 
+**Speak to the person in their language; do the work in English.** These instructions are in English
+because the repo is — that is not a request to answer in English. Anything addressed to them goes in
+the language they write in: the questions, what you report, a block message you paraphrase. Anything
+that stays in the project is English — the PRD, commit messages, code and comments, notes to the
+advisor — because it costs fewer tokens than most languages and it is what the repo reads like. When
+you show them something written in English, summarize it in their language rather than making them
+read it twice.
+
+
 - The first sentence is the conclusion. No background, no process, no exploration log up front.
 - Four lines by default. Code, tables and commands may run long; explanations may not.
 - Don't relay what the tools showed. No file listings, grep dumps or full logs — only the judgment drawn from them.

@@ -5,6 +5,15 @@ description: The interview procedure and how to write the one-page PRD. Follow t
 
 # Before you start
 
+**The PRD is written in English; the conversation happens in the person's language.** The file is a
+work artifact that the hooks and the advisor read, and English costs fewer tokens. What you say to
+the person — the questions, what you heard, the final report — is in their language. Don't make them
+read English out of the file: ask in the conversation, in their words.
+
+Section headings stay exactly as the template spells them (`## Open questions`, `## Plan`, `## Tasks`).
+The hooks match on those.
+
+
 Large edits are blocked until a PRD is agreed. Don't work around the block — follow this order.
 
 ## 0. When they say "I'll tell you several things"
