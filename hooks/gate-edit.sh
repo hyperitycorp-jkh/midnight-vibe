@@ -207,8 +207,11 @@ if [ "$state" = "running" ]; then
   # A `seen` stamped by the pre-0.3 hash still counts while the whole body is unchanged.
   [ "$seen" = "$body" ] || [ "$seen" = "$(body_hash_legacy "$prd")" ] || missing="${missing}· The PRD the user saw (seen=${seen:-none}) differs from the current one (${body}) — show the revised PRD and get a reply.
 "
-  if [ -n "$plan" ] && [ "$approved" != "$plan" ]; then
-    missing="${missing}· The approved plan (approved=${approved:-none}) differs from the current one (${plan}) — the plan changed, so get it approved again.
+  # The advisor's tool_result is the evidence; `approved:` is only a cache of it. Nothing in the
+  # procedure ever wrote that line, so demanding it kept the gate shut after a valid approval.
+  # It still blocks when it's present and names another plan — that is a stale stamp.
+  if [ -n "$plan" ] && [ -n "$approved" ] && [ "$approved" != "$plan" ]; then
+    missing="${missing}· The approved plan (approved=${approved}) differs from the current one (${plan}) — the plan changed, so get it approved again.
 "
   elif [ -n "$plan" ] && ! advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "APPROVED plan#${plan}"; then
     missing="${missing}· This session's transcript has no 'APPROVED plan#${plan}' from the advisor — approval counts only from the advisor subagent's result, never from a sentence in a reply.

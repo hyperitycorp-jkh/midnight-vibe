@@ -44,6 +44,13 @@ case "$state" in
     block_stop "[midnight] The plan hasn't been approved yet. Don't stop here — send ## Plan to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: approve'. On approval set state to running and carry on. On rejection, fix the plan and resubmit — this does not go to the user." ;;
 
   running)
+    boxes=$(awk '/^## Tasks[[:space:]]*$/{f=1;next} /^## /{f=0} f && /^[[:space:]]*-[[:space:]]*\[[ xX]\]/' "$prd" 2>/dev/null)
+    if [ -z "$boxes" ]; then
+      # No boxes is not "all done". Sending an untouched plan to review, and blocking every stop
+      # until it does, trapped sessions that were only waiting on something from the user.
+      bump_loop
+      block_stop "[midnight] ## Tasks has no checkboxes, so there is nothing to measure progress by. Split ## Plan into '- [ ] …' lines under ## Tasks and work through them. If you are blocked on something only the user can give, set state back to prd and say what you need."
+    fi
     left=$(awk '/^## Tasks[[:space:]]*$/{f=1;next} /^## /{f=0} f && /^[[:space:]]*-[[:space:]]*\[[[:space:]]\]/' "$prd" 2>/dev/null)
     if [ -n "$left" ]; then
       bump_loop
@@ -57,7 +64,7 @@ Keep going. If you're stuck, ask the advisor — not the user. If the premise tu
     block_stop "[midnight] Every task is done. Go to review — set state to review and send it to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: review'." ;;
 
   review)
-    tree=$("$MV_ROOT/bin/tree-hash" "$cwd")
+    tree=$("$MV_ROOT/bin/tree-hash" "$(mv_root "$cwd")")
     if advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "REVIEWED ok tree#${tree}"; then
       bump_loop
       block_stop "[midnight] Review passed (tree#${tree}). Wrap up — move anything worth keeping into memory, delete .midnight/prd.md, then write the final report."

@@ -4,11 +4,28 @@
 
 MV_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
+# The project the hooks act on. The session's cwd follows every `cd`, so reading
+# `.midnight/` from cwd alone lost the PRD the moment work moved into a subfolder —
+# the phase fell back to `none` and the size gate fired mid-run. Walk up to the
+# nearest folder that holds `.midnight/` (or a pre-0.4 `.claude/prd.md`), stopping at $HOME.
+mv_root() {
+  local d
+  d=$(cd "${1:-.}" 2>/dev/null && pwd) || { printf '%s' "${1:-.}"; return; }
+  while [ -n "$d" ] && [ "$d" != "/" ] && [ "$d" != "$HOME" ]; do
+    if [ -d "$d/.midnight" ] || [ -f "$d/.claude/prd.md" ] || [ -e "$d/.claude/harness.off" ]; then
+      printf '%s' "$d"; return
+    fi
+    d=$(dirname "$d")
+  done
+  printf '%s' "${1:-.}"
+}
+
 # A switch that sits in front of the hooks. A broken harness must never stop someone working.
 mv_off() {
   [ "${CLAUDE_HARNESS_OFF:-}" = "1" ] && return 0
-  [ -e "${1:-.}/.midnight/off" ] && return 0
-  [ -e "${1:-.}/.claude/harness.off" ] && return 0   # where the switch lived before 0.4
+  local r; r=$(mv_root "${1:-.}")
+  [ -e "$r/.midnight/off" ] && return 0
+  [ -e "$r/.claude/harness.off" ] && return 0   # where the switch lived before 0.4
   return 1
 }
 
@@ -17,7 +34,7 @@ mv_off() {
 # allow rule you add — so a PRD inside it turned every task tick into a prompt. A PRD already in
 # flight at .claude/prd.md is still read, so work started before the move doesn't break.
 mv_prd() {
-  local d="${1:-.}"
+  local d; d=$(mv_root "${1:-.}")
   if [ -f "$d/.midnight/prd.md" ] || [ ! -f "$d/.claude/prd.md" ]; then
     printf '%s/.midnight/prd.md' "$d"
   else

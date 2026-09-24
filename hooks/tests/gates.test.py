@@ -356,6 +356,30 @@ seen2 = [l for l in open(prd) if l.startswith("seen:")][0].split(":", 1)[1].stri
 check("state=running 에서는 seen 을 건드리지 않음", seen2 == "", True)
 
 print()
+# ── 실사용 회귀 (2026-09-23) ──────────────────────────────────────
+# 절차 어디에서도 `approved:` 를 써 주지 않는다. advisor 승인을 세 번 받아도 빈 스탬프 때문에
+# 게이트가 "계획이 바뀌었다"며 계속 막았다.
+tmp = tempfile.mkdtemp(); prd = make_project(tmp, state="running", plan="1. 하나", seen="auto")
+ph = subprocess.run([os.path.join(ROOT, "bin", "prd-hash"), prd], capture_output=True, text=True).stdout.strip()
+tr_a = transcript(tmp, advisor_result=f"APPROVED plan#{ph}", subagent="midnight-vibe:advisor", name="t_reg.jsonl")
+check("running + approved 비어 있음 + advisor 승인 → 통과",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60, tr=tr_a))), False)
+check("running + approved 비어 있음 + 승인 없음 → 차단",
+      denied(run(EDIT, edit_payload(tmp, content="x\n" * 60))), True)
+
+# cwd 가 하위 폴더로 옮겨가도 같은 PRD 를 읽는다.
+sub = os.path.join(tmp, "tools", "deep"); os.makedirs(sub)
+p = edit_payload(tmp, content="x\n" * 60, tr=tr_a); p["cwd"] = sub
+check("cwd 가 하위 폴더여도 상위 .midnight 의 승인으로 통과", denied(run(EDIT, p)), False)
+open(os.path.join(tmp, ".midnight", "off"), "w").close()
+p = edit_payload(tmp, content="x\n" * 60); p["cwd"] = sub
+check("하위 폴더에서도 .midnight/off 스위치가 먹음", denied(run(EDIT, p)), False)
+
+# 체크박스가 하나도 없는 running 은 "다 끝남"이 아니다.
+tmp = tempfile.mkdtemp(); make_project(tmp, state="running", todo="")
+r = run(STOP, {"cwd": tmp, "transcript_path": ""})
+check("running + Tasks 체크박스 없음 → review 로 보내지 않음", "Go to review" in r.stdout, False)
+
 if FAIL:
     print(f"실패 {len(FAIL)}건: " + ", ".join(FAIL)); sys.exit(1)
 print("전부 통과")
