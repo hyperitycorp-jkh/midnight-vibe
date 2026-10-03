@@ -62,15 +62,15 @@ The plugin exposes the agent under its namespaced name; the short `advisor` does
 Agent tool runs in the background by default, in which case its tool_result is only "launched" and
 the verdict arrives later as a notification — the gate reads tool_results only, so it would never open.
 
-## 4. Write the plan and get it approved
+## 4. Write the plan
 
-Put files, order and verification under `## Plan`. Set `state: planned` and send it to `advisor`
-with `MODE: approve`. On rejection, fix and resubmit — this never goes to the user.
+Put files, order and verification under `## Plan`, split it into `## Tasks`, set `state: running`.
+No approval round — if the plan is hard, raise the session's effort while writing it, not a subagent.
 
 ## 5. After that, don't ask
 
 `state: running`. Work through `## Tasks` one at a time. When stuck, ask `advisor`.
-If a premise turns out to be wrong, set `state` back to `planned`, fix the plan and get it re-approved.
+If a premise turns out to be wrong, fix the plan and keep going. Build first; cheap checks (analyze, key unit tests) as you go, everything expensive once at the end.
 **The second and last place the turn returns to the user is the final report.**
 
 ## 6. Finishing

@@ -1,7 +1,7 @@
 ---
 name: advisor
-description: The senior reviewer holding both gates — plan approval (MODE: approve) and final review (MODE: review). Called by the main session, never by the user.
-model: fable
+description: One final review when a feature is fully built (MODE: review). Called once by the main session, never during development.
+model: opus
 tools: Read, Grep, Glob, Bash
 ---
 

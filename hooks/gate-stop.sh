@@ -40,8 +40,7 @@ case "$state" in
   intake|interview|prd|none) exit 0 ;;   # the only places the turn may go back to the user
 
   planned)
-    bump_loop
-    block_stop "[midnight] The plan hasn't been approved yet. Don't stop here — send ## Plan to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: approve'. On approval set state to running and carry on. On rejection, fix the plan and resubmit — this does not go to the user." ;;
+    exit 0 ;;   # 0.8.0: no approval gate — set state: running once the plan is written
 
   running)
     left=$(awk '/^## Tasks[[:space:]]*$/{f=1;next} /^## /{f=0} f && /^[[:space:]]*-[[:space:]]*\[[[:space:]]\]/' "$prd" 2>/dev/null)
@@ -51,16 +50,16 @@ case "$state" in
 
 $left
 
-Keep going. If you're stuck, ask the advisor — not the user. If the premise turned out wrong, set state back to planned, fix the plan and get it approved again."
+Keep going — build first, test and review once at the end. If only the user can decide something, ask them."
     fi
     bump_loop
-    block_stop "[midnight] Every task is done. Go to review — set state to review and send it to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: review'." ;;
+    block_stop "[midnight] Every task is done. Test once, then one review — set state to review and send it to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: review'." ;;
 
   review)
     tree=$("$MV_ROOT/bin/tree-hash" "$cwd")
-    if advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "REVIEWED ok tree#${tree}"; then
-      bump_loop
-      block_stop "[midnight] Review passed (tree#${tree}). Wrap up — move anything worth keeping into memory, delete .midnight/prd.md, then write the final report."
+    # 0.8.0: one review per feature — a "fix" verdict is fixed directly, no second round.
+    if advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -qE "REVIEWED (ok|fix)"; then
+      exit 0
     fi
     bump_loop
     if advisor_ran_in_background "$(printf '%s' "$input" | jq -r '.transcript_path // empty')"; then
