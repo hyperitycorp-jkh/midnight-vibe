@@ -2,15 +2,15 @@
 # PreToolUse. Denies what doesn't belong in the current phase.
 #
 #  - a large edit before a PRD exists  → denied (starting without the interview)
-#  - execution without approval evidence → denied (the plan gate)
+#  - running without a seen PRD and a plan → denied (0.8.0: no advisor approval)
 #  - a question to the user mid-run     → denied (autonomy)
 #  - memory growing without bound       → denied
 #
 # Making a forged state useless is the whole job of this hook: anyone can write
 # `state: running`, so every edit in that state re-checks **the evidence for it**.
 set -u
-MAX_FILES=2
-MAX_LINES=40
+MAX_FILES=${MV_MAX_FILES:-10}
+MAX_LINES=${MV_MAX_LINES:-400}
 MAX_MEMORY_FILES=12
 MAX_RULES_LINES=150
 MAX_TICKS_PER_WRITE=2
@@ -26,19 +26,9 @@ tool=$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)
 prd="$(mv_prd "$cwd")"
 state=$(fm "$prd" state); [ -z "$state" ] && state="none"
 
-# ── No questions leak ─────────────────────────────────────────────
-# Once the PRD stands, no question reaches the user. The only exits left are the
-# advisor and stepping the phase back.
+# ── Questions ─────────────────────────────────────────────────────
+# 0.8.0: asking the user is never blocked. Real decisions (money, accounts, quotas) surface mid-run.
 if [ "$tool" = "AskUserQuestion" ]; then
-  case "$state" in
-    planned|running|review)
-      require_jq
-      deny_json "[midnight] No questions to the user in the '$state' phase.
-
-If it's inside what the PRD already settled, decide it yourself. If you genuinely can't, ask the
-advisor subagent. If the premise itself turned out wrong, set state in .midnight/prd.md back to
-'planned' (fix the plan) or 'prd' (re-agree) and write why under ## Decisions." ;;
-  esac
   exit 0
 fi
 
@@ -196,7 +186,6 @@ esac
 # ── Per-phase decision ────────────────────────────────────────────
 if [ "$state" = "running" ]; then
   plan=$("$MV_ROOT/bin/prd-hash" "$prd")
-  approved=$(fm "$prd" approved)
   seen=$(fm "$prd" seen)
   body=$(body_hash "$prd")
   missing=""
@@ -207,22 +196,10 @@ if [ "$state" = "running" ]; then
   # A `seen` stamped by the pre-0.3 hash still counts while the whole body is unchanged.
   [ "$seen" = "$body" ] || [ "$seen" = "$(body_hash_legacy "$prd")" ] || missing="${missing}· The PRD the user saw (seen=${seen:-none}) differs from the current one (${body}) — show the revised PRD and get a reply.
 "
-  if [ -n "$plan" ] && [ "$approved" != "$plan" ]; then
-    missing="${missing}· The approved plan (approved=${approved:-none}) differs from the current one (${plan}) — the plan changed, so get it approved again.
-"
-  elif [ -n "$plan" ] && ! advisor_results "$(printf '%s' "$input" | jq -r '.transcript_path // empty')" | grep -q "APPROVED plan#${plan}"; then
-    missing="${missing}· This session's transcript has no 'APPROVED plan#${plan}' from the advisor — approval counts only from the advisor subagent's result, never from a sentence in a reply.
-"
-  fi
   [ -z "$missing" ] && exit 0
-  if advisor_ran_in_background "$(printf '%s' "$input" | jq -r '.transcript_path // empty')"; then
-    missing="${missing}· ${BACKGROUND_HINT}
-"
-  fi
-  deny_json "[midnight] Not enough evidence for the 'running' phase.
+  deny_json "[midnight] The PRD isn't ready for the 'running' phase.
 
-$missing
-Send the plan to Agent(subagent_type: midnight-vibe:advisor, run_in_background: false) with 'MODE: approve', then continue."
+$missing"
 fi
 
 # Before the PRD: small work just happens. Making someone write a PRD to fix a typo
@@ -237,5 +214,5 @@ deny_json "[midnight] No PRD yet (state=$state; ${nfiles} file(s), ${nlines} lin
 Create .midnight/prd.md and go in this order.
  1) Put what must be asked under ## Open questions — five or fewer, each with a default → set state: prd and show it to the user
  2) Move the answers into ## Decisions and empty ## Open questions → state: planned
- 3) Write ## Plan and get it approved by the advisor (MODE: approve) → state: running
-After that it runs to the end without asking."
+ 3) Write ## Plan and ## Tasks (raise effort for planning if needed) → state: running
+After that it runs to the end; one advisor review when everything is built."
